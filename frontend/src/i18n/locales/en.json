@@ -1,0 +1,342 @@
+{
+  "auth": {
+    "login": {
+      "tagline": "Secure Internal Communications",
+      "identifierLabel": "Username, Email, or Staff ID",
+      "identifierPlaceholder": "Enter your identifier",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "Enter your password",
+      "signingIn": "Signing in…",
+      "signIn": "Sign In",
+      "needAccount": "Need an account?",
+      "signUpLink": "Sign up",
+      "restricted": "Access restricted to authorized personnel only",
+      "failed": "Login failed. Please try again."
+    },
+    "signup": {
+      "title": "Create Account",
+      "subtitle": "Access activates after admin approval",
+      "fullNameLabel": "Full name",
+      "fullNamePlaceholder": "Jane Doe",
+      "usernameLabel": "Username",
+      "usernamePlaceholder": "jdoe",
+      "emailLabel": "Email",
+      "optionalPlaceholder": "optional",
+      "staffIdLabel": "Staff ID",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "At least 8 characters",
+      "creating": "Creating account…",
+      "create": "Create Account",
+      "haveAccount": "Already have an account?",
+      "signInLink": "Sign in",
+      "failed": "Signup failed. Please try again.",
+      "doneTitle": "Account created",
+      "doneMessage": "An administrator must approve your account before you can sign in.",
+      "backToSignIn": "Back to sign in"
+    },
+    "mfa": {
+      "title": "Verification Required",
+      "totpInstructions": "Enter the 6-digit code from your authenticator app.",
+      "emailInstructions": "Enter the 6-digit code sent to your email.",
+      "verifying": "Verifying…",
+      "verify": "Verify",
+      "backToLogin": "Back to login",
+      "invalidCode": "Invalid code. Please try again."
+    }
+  },
+  "common": {
+    "appName": "OpCom",
+    "cancel": "Cancel",
+    "save": "Save",
+    "loading": "Loading…",
+    "signOut": "Sign out",
+    "unknown": "Unknown",
+    "media": "Media",
+    "search": "Search",
+    "searching": "Searching…",
+    "justNow": "just now"
+  },
+  "chat": {
+    "header": {
+      "connected": "Connected",
+      "reconnecting": "Reconnecting…",
+      "searchMessages": "Search messages",
+      "admin": "Admin"
+    },
+    "newChat": {
+      "title": "New Conversation",
+      "type": "Type",
+      "private": "Private",
+      "group": "Group",
+      "groupNameLabel": "Group name",
+      "groupNamePlaceholder": "e.g. Alpha Team",
+      "recipientLabel": "Username of recipient",
+      "addMemberLabel": "Add member (username)",
+      "usernamePlaceholder": "username",
+      "creating": "Creating…",
+      "create": "Create",
+      "failed": "Failed to create conversation"
+    },
+    "members": "{{count}} members",
+    "list": {
+      "title": "Messages",
+      "newConversation": "New conversation",
+      "empty": "No conversations yet.",
+      "emptyHint": "Start a new one above.",
+      "archived": "Archived",
+      "archive": "Archive",
+      "unarchive": "Unarchive",
+      "mute": "Mute…",
+      "unmute": "Unmute",
+      "muteFor8h": "Mute for 8 hours",
+      "muteFor1w": "Mute for 1 week",
+      "muteAlways": "Mute always",
+      "moreOptions": "More options",
+      "muted": "Muted"
+    },
+    "thread": {
+      "selectConversation": "Select a conversation to start messaging",
+      "disappearingOff": "Off",
+      "disappearing24h": "24 hours",
+      "disappearing7d": "7 days",
+      "disappearing90d": "90 days",
+      "disappearingMessages": "Disappearing messages",
+      "disappearingRestricted": "Only group owners/admins can change this",
+      "voiceCall": "Voice call",
+      "videoCall": "Video call",
+      "loadOlder": "Load older messages",
+      "isTyping": "is typing…",
+      "areTyping": "are typing…"
+    },
+    "bubble": {
+      "youDeleted": "You deleted this message",
+      "messageDeleted": "This message was deleted",
+      "forwardedFrom": "Forwarded from {{name}}",
+      "edited": "edited",
+      "originalDeleted": "Original message deleted",
+      "photo": "Photo",
+      "audioType": "Audio",
+      "videoType": "Video",
+      "documentType": "Document",
+      "tapToLoadImage": "Tap to load image",
+      "playAudio": "Play audio",
+      "playVideo": "Play video",
+      "downloadDocument": "Download document"
+    },
+    "input": {
+      "placeholder": "Type a message…",
+      "attachFile": "Attach file",
+      "scheduleMessage": "Schedule message",
+      "sendAt": "Send at",
+      "schedule": "Schedule",
+      "replyingTo": "Replying to {{name}}",
+      "uploading": "Uploading…",
+      "uploadFailed": "Upload failed. Check file type and size.",
+      "everyoneInGroup": "Everyone in this group"
+    },
+    "actions": {
+      "forward": "Forward",
+      "reply": "Reply",
+      "edit": "Edit",
+      "delete": "Delete",
+      "confirmDelete": "Delete this message? This cannot be undone.",
+      "react": "React",
+      "moreEmoji": "More emoji"
+    },
+    "call": {
+      "calling": "Calling…",
+      "mute": "Mute",
+      "unmute": "Unmute",
+      "endCall": "End call",
+      "turnOnCamera": "Turn on camera",
+      "turnOffCamera": "Turn off camera",
+      "incomingCall": "Incoming {{type}} call",
+      "audio": "audio",
+      "video": "video",
+      "decline": "Decline",
+      "accept": "Accept",
+      "missedFrom": "Missed call from {{name}}",
+      "noAnswerFrom": "{{name}} didn't answer"
+    },
+    "callHistory": {
+      "title": "Calls",
+      "empty": "No calls yet",
+      "missed": "Missed",
+      "declined": "Declined",
+      "answered": "Answered",
+      "noAnswer": "No answer",
+      "failed": "Failed",
+      "outgoing": "Outgoing",
+      "incoming": "Incoming"
+    },
+    "forward": {
+      "title": "Forward message",
+      "mediaMessage": "Media message",
+      "noConversations": "No conversations available",
+      "forwarding": "Forwarding…",
+      "forward": "Forward",
+      "failed": "Failed to forward message"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "empty": "No notifications"
+    },
+    "search": {
+      "title": "Search messages",
+      "textPlaceholder": "Search text…",
+      "senderPlaceholder": "Sender username",
+      "anyType": "Any type",
+      "text": "Text",
+      "photos": "Photos",
+      "videos": "Videos",
+      "audio": "Audio",
+      "documents": "Documents",
+      "noResults": "No results",
+      "noUserFound": "No user found matching \"{{username}}\"",
+      "failed": "Search failed",
+      "inGroup": "in {{name}}",
+      "inDirectMessage": "in Direct message"
+    },
+    "scheduled": {
+      "title": "Scheduled"
+    }
+  },
+  "admin": {
+    "layout": {
+      "title": "OpCom Admin",
+      "backToChat": "← Back to Chat",
+      "nav": {
+        "dashboard": "Dashboard",
+        "users": "Users",
+        "devices": "Devices",
+        "alerts": "Security Alerts",
+        "auditLogs": "Audit Logs"
+      }
+    },
+    "dashboard": {
+      "title": "System Overview",
+      "loadingStats": "Loading stats…",
+      "totalUsers": "Total Users",
+      "activeUsers": "Active Users",
+      "lockedAccounts": "Locked Accounts",
+      "activeSessions": "Active Sessions",
+      "totalMessages": "Total Messages",
+      "todaySuffix": "{{count}} today",
+      "totalCalls": "Total Calls",
+      "unresolvedAlerts": "Unresolved Alerts",
+      "alertWarning_one": "unresolved security alert requires your attention.",
+      "alertWarning_other": "unresolved security alerts require your attention."
+    },
+    "users": {
+      "searchPlaceholder": "Search name, email, username…",
+      "columnUser": "User",
+      "columnRole": "Role",
+      "columnStatus": "Status",
+      "columnLastLogin": "Last Login",
+      "columnJoined": "Joined",
+      "columnActions": "Actions",
+      "statusLocked": "Locked",
+      "statusInactive": "Inactive",
+      "statusActive": "Active",
+      "failedAttempts": "{{count}} failed",
+      "approve": "Approve",
+      "lock": "Lock",
+      "unlock": "Unlock",
+      "noUsersFound": "No users found"
+    },
+    "devices": {
+      "title": "Device Management",
+      "tabPending": "pending",
+      "tabActive": "active",
+      "tabRevoked": "revoked",
+      "noDevices": "No {{status}} devices",
+      "columnDevice": "Device",
+      "columnUser": "User",
+      "columnPlatform": "Platform",
+      "columnRequested": "Requested",
+      "columnActions": "Actions",
+      "approve": "Approve",
+      "revoke": "Revoke",
+      "revoked": "Revoked",
+      "confirmRevoke": "Revoke this device? The user will need to re-register it."
+    },
+    "alerts": {
+      "showResolved": "Show resolved",
+      "noAlerts": "No alerts",
+      "noUnresolvedAlerts": "No unresolved alerts",
+      "resolve": "Resolve",
+      "resolvedPrefix": "Resolved",
+      "userLabel": "User: {{name}} (@{{username}})"
+    },
+    "auditLogs": {
+      "title": "Audit Logs",
+      "filterPlaceholder": "Filter by action…",
+      "columnTime": "Time",
+      "columnUser": "User",
+      "columnAction": "Action",
+      "columnTarget": "Target",
+      "columnIp": "IP",
+      "noLogs": "No logs found",
+      "prev": "Prev",
+      "next": "Next",
+      "paginationOf": "of"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "backToChat": "← Back to Chat",
+    "profile": {
+      "title": "Profile",
+      "changePhoto": "Change photo",
+      "fullNameLabel": "Full name",
+      "usernameLabel": "Username",
+      "bioLabel": "Bio",
+      "bioPlaceholder": "Tell people a bit about yourself",
+      "statusLabel": "Status message",
+      "statusPlaceholder": "What's on your mind?",
+      "save": "Save profile",
+      "saved": "Profile updated",
+      "failed": "Failed to update profile",
+      "avatarFailed": "Failed to update photo"
+    },
+    "appearance": {
+      "title": "Appearance",
+      "theme": "Theme",
+      "themeDark": "Dark",
+      "themeLight": "Light",
+      "themeSystem": "System",
+      "themeWipNote": "Light and System don't change the look yet — only Dark actually renders today.",
+      "language": "Language"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "sound": "Sound on incoming calls & messages",
+      "vibrate": "Vibrate on incoming calls & messages"
+    },
+    "privacy": {
+      "title": "Privacy",
+      "readReceipts": "Send read receipts",
+      "showTyping": "Show when you're typing"
+    },
+    "chat": {
+      "title": "Chat",
+      "autoDownload": "Auto-download media",
+      "textScale": "Message text size",
+      "textScaleSmall": "Small",
+      "textScaleMedium": "Medium",
+      "textScaleLarge": "Large"
+    },
+    "security": {
+      "title": "Security",
+      "currentPasswordLabel": "Current password",
+      "newPasswordLabel": "New password",
+      "confirmPasswordLabel": "Confirm new password",
+      "changePassword": "Change password",
+      "mismatch": "Passwords don't match",
+      "success": "Password updated",
+      "failed": "Failed to update password"
+    },
+    "settingsSaved": "Settings updated",
+    "settingsFailed": "Failed to update settings"
+  }
+}
