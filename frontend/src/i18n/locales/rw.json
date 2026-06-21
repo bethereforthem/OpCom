@@ -1,0 +1,342 @@
+{
+  "auth": {
+    "login": {
+      "tagline": "Itumanaho ryizewe ry'imbere mu kigo",
+      "identifierLabel": "Izina ry'ukoresha, Imeyili, cyangwa Nomero y'umukozi",
+      "identifierPlaceholder": "Andika izina ryawe ryo kwinjira",
+      "passwordLabel": "Ijambo ry'ibanga",
+      "passwordPlaceholder": "Andika ijambo ry'ibanga",
+      "signingIn": "Kwinjira…",
+      "signIn": "Injira",
+      "needAccount": "Ntufite konti?",
+      "signUpLink": "Iyandikishe",
+      "restricted": "Ifashishwa gusa n'abemerewe",
+      "failed": "Kwinjira ntibyakunze. Ongera ugerageze."
+    },
+    "signup": {
+      "title": "Fungura Konti",
+      "subtitle": "Konti izakora nyuma y'uko umuyobozi ayemeje",
+      "fullNameLabel": "Amazina yuzuye",
+      "fullNamePlaceholder": "Jane Doe",
+      "usernameLabel": "Izina ry'ukoresha",
+      "usernamePlaceholder": "jdoe",
+      "emailLabel": "Imeyili",
+      "optionalPlaceholder": "Bitari ngombwa",
+      "staffIdLabel": "Nomero y'umukozi",
+      "passwordLabel": "Ijambo ry'ibanga",
+      "passwordPlaceholder": "Nibura inyuguti 8",
+      "creating": "Gufungura konti…",
+      "create": "Fungura Konti",
+      "haveAccount": "Ufite konti?",
+      "signInLink": "Injira",
+      "failed": "Kwiyandikisha ntibyakunze. Ongera ugerageze.",
+      "doneTitle": "Konti yafunguwe",
+      "doneMessage": "Umuyobozi agomba kwemeza konti yawe mbere y'uko winjira.",
+      "backToSignIn": "Subira ku kwinjira"
+    },
+    "mfa": {
+      "title": "Kwemeza Birasabwa",
+      "totpInstructions": "Andika kode y'imibare 6 iboneka kuri porogaramu yawe yo kwemeza.",
+      "emailInstructions": "Andika kode y'imibare 6 yoherejwe kuri imeyili yawe.",
+      "verifying": "Kwemeza…",
+      "verify": "Emeza",
+      "backToLogin": "Subira ku kwinjira",
+      "invalidCode": "Kode siyo. Ongera ugerageze."
+    }
+  },
+  "common": {
+    "appName": "OpCom",
+    "cancel": "Hagarika",
+    "save": "Bika",
+    "loading": "Birimo gupakira…",
+    "signOut": "Sohoka",
+    "unknown": "Ntiwamenyekanye",
+    "media": "Itangazamakuru",
+    "search": "Shakisha",
+    "searching": "Birimo gushakisha…",
+    "justNow": "ubu nonaha"
+  },
+  "chat": {
+    "header": {
+      "connected": "Wahujwe",
+      "reconnecting": "Kongera guhuza…",
+      "searchMessages": "Shakisha ubutumwa",
+      "admin": "Ubuyobozi"
+    },
+    "newChat": {
+      "title": "Ikiganiro Gishya",
+      "type": "Ubwoko",
+      "private": "Bwite",
+      "group": "Itsinda",
+      "groupNameLabel": "Izina ry'itsinda",
+      "groupNamePlaceholder": "urugero: Itsinda Alpha",
+      "recipientLabel": "Izina ry'ukoresha uwakira",
+      "addMemberLabel": "Ongeraho umunyamuryango (izina ry'ukoresha)",
+      "usernamePlaceholder": "izina ry'ukoresha",
+      "creating": "Birimo gukora…",
+      "create": "Kora",
+      "failed": "Kurema ikiganiro ntibyakunze"
+    },
+    "members": "abanyamuryango {{count}}",
+    "list": {
+      "title": "Ubutumwa",
+      "newConversation": "Ikiganiro gishya",
+      "empty": "Nta kiganiro urafite.",
+      "emptyHint": "Tangira ikimwe hejuru.",
+      "archived": "Byabikwe",
+      "archive": "Bika",
+      "unarchive": "Garura",
+      "mute": "Hagarika ijwi…",
+      "unmute": "Garura ijwi",
+      "muteFor8h": "Hagarika ijwi amasaha 8",
+      "muteFor1w": "Hagarika ijwi icyumweru 1",
+      "muteAlways": "Hagarika ijwi burundu",
+      "moreOptions": "Ibindi byo guhitamo",
+      "muted": "Ijwi rihagaze"
+    },
+    "thread": {
+      "selectConversation": "Hitamo ikiganiro kugira ngo utangire kuvugana",
+      "disappearingOff": "Bidakora",
+      "disappearing24h": "Amasaha 24",
+      "disappearing7d": "Iminsi 7",
+      "disappearing90d": "Iminsi 90",
+      "disappearingMessages": "Ubutumwa bubura",
+      "disappearingRestricted": "Abafite uburenganzira bwo kuyobora itsinda gusa ni bo bahindura iki",
+      "voiceCall": "Guhamagara mu ijwi",
+      "videoCall": "Guhamagara kuri videwo",
+      "loadOlder": "Reba ubutumwa bwa kera",
+      "isTyping": "ariko yandika…",
+      "areTyping": "bariko bandika…"
+    },
+    "bubble": {
+      "youDeleted": "Wasibye ubu butumwa",
+      "messageDeleted": "Ubu butumwa bwasibwe",
+      "forwardedFrom": "Bwoherejwe na {{name}}",
+      "edited": "byahinduwe",
+      "originalDeleted": "Ubutumwa nyabwo bwasibwe",
+      "photo": "Ifoto",
+      "audioType": "Ijwi",
+      "videoType": "Videwo",
+      "documentType": "Inyandiko",
+      "tapToLoadImage": "Kanda kugira ngo ifoto igaragare",
+      "playAudio": "Tangiza ijwi",
+      "playVideo": "Tangiza videwo",
+      "downloadDocument": "Kuramo inyandiko"
+    },
+    "input": {
+      "placeholder": "Andika ubutumwa…",
+      "attachFile": "Shyiraho dosiye",
+      "scheduleMessage": "Tegura igihe cyo kohereza",
+      "sendAt": "Ohereza saa",
+      "schedule": "Tegura",
+      "replyingTo": "Usubiza {{name}}",
+      "uploading": "Birimo kohereza…",
+      "uploadFailed": "Kohereza ntibyakunze. Reba ubwoko n'ingano ya dosiye.",
+      "everyoneInGroup": "Bose muri iri tsinda"
+    },
+    "actions": {
+      "forward": "Ohereza",
+      "reply": "Subiza",
+      "edit": "Hindura",
+      "delete": "Siba",
+      "confirmDelete": "Siba ubu butumwa? Ibi ntibishobora gusubizwamo.",
+      "react": "Itabaza",
+      "moreEmoji": "Ibindi bishushanyo"
+    },
+    "call": {
+      "calling": "Birimo guhamagara…",
+      "mute": "Hagarika ijwi",
+      "unmute": "Garura ijwi",
+      "endCall": "Hagarika guhamagara",
+      "turnOnCamera": "Fungura kamera",
+      "turnOffCamera": "Funga kamera",
+      "incomingCall": "Hari uhamagara mu {{type}}",
+      "audio": "ijwi",
+      "video": "videwo",
+      "decline": "Anga",
+      "accept": "Emera",
+      "missedFrom": "Wahamagawe na {{name}} ntiwasubije",
+      "noAnswerFrom": "{{name}} ntiyasubije"
+    },
+    "callHistory": {
+      "title": "Amahamagara",
+      "empty": "Nta hamagara rihari",
+      "missed": "Ntiwasubijwe",
+      "declined": "Yanzwe",
+      "answered": "Byasubijwe",
+      "noAnswer": "Nta gisubizo",
+      "failed": "Ntibyakunze",
+      "outgoing": "Wohereje",
+      "incoming": "Wakiriye"
+    },
+    "forward": {
+      "title": "Ohereza ubutumwa",
+      "mediaMessage": "Ubutumwa bw'itangazamakuru",
+      "noConversations": "Nta kiganiro kiboneka",
+      "forwarding": "Birimo kohereza…",
+      "forward": "Ohereza",
+      "failed": "Kohereza ubutumwa ntibyakunze"
+    },
+    "notifications": {
+      "title": "Imenyesha",
+      "empty": "Nta menyesha rihari"
+    },
+    "search": {
+      "title": "Shakisha ubutumwa",
+      "textPlaceholder": "Shakisha amagambo…",
+      "senderPlaceholder": "Izina ry'ukoresha woherereje",
+      "anyType": "Ubwoko bwose",
+      "text": "Inyandiko",
+      "photos": "Amafoto",
+      "videos": "Videwo",
+      "audio": "Ijwi",
+      "documents": "Inyandiko",
+      "noResults": "Nta gisubizo",
+      "noUserFound": "Nta ukoresha wabonetse uhuye na \"{{username}}\"",
+      "failed": "Gushakisha ntibyakunze",
+      "inGroup": "muri {{name}}",
+      "inDirectMessage": "mu butumwa butaziguye"
+    },
+    "scheduled": {
+      "title": "Byateguwe"
+    }
+  },
+  "admin": {
+    "layout": {
+      "title": "Ubuyobozi bwa OpCom",
+      "backToChat": "← Subira ku kiganiro",
+      "nav": {
+        "dashboard": "Ikibaho",
+        "users": "Abakoresha",
+        "devices": "Ibikoresho",
+        "alerts": "Imenyesha ry'umutekano",
+        "auditLogs": "Raporo z'ibikorwa"
+      }
+    },
+    "dashboard": {
+      "title": "Incamake y'Uburyo",
+      "loadingStats": "Birimo gupakira imibare…",
+      "totalUsers": "Abakoresha bose",
+      "activeUsers": "Abakoresha bakora",
+      "lockedAccounts": "Konti zafunzwe",
+      "activeSessions": "Ibihe bikora",
+      "totalMessages": "Ubutumwa bwose",
+      "todaySuffix": "{{count}} uyu munsi",
+      "totalCalls": "Guhamagara byose",
+      "unresolvedAlerts": "Imenyesha ritakemutse",
+      "alertWarning_one": "imenyesha ry'umutekano ritakemutse risaba kwitabwaho.",
+      "alertWarning_other": "amamenyesha y'umutekano atakemutse asaba kwitabwaho."
+    },
+    "users": {
+      "searchPlaceholder": "Shakisha izina, imeyili, izina ry'ukoresha…",
+      "columnUser": "Ukoresha",
+      "columnRole": "Uruhare",
+      "columnStatus": "Imiterere",
+      "columnLastLogin": "Igihe yaheruka kwinjira",
+      "columnJoined": "Yinjiye",
+      "columnActions": "Ibikorwa",
+      "statusLocked": "Yafunzwe",
+      "statusInactive": "Ntakora",
+      "statusActive": "Ikora",
+      "failedAttempts": "{{count}} ntibyakunze",
+      "approve": "Emeza",
+      "lock": "Funga",
+      "unlock": "Fungura",
+      "noUsersFound": "Nta mukoresha wabonetse"
+    },
+    "devices": {
+      "title": "Imicungire y'Ibikoresho",
+      "tabPending": "bitegereje",
+      "tabActive": "bikora",
+      "tabRevoked": "byahagaritswe",
+      "noDevices": "Nta gikoresho {{status}}",
+      "columnDevice": "Igikoresho",
+      "columnUser": "Ukoresha",
+      "columnPlatform": "Sisitemu",
+      "columnRequested": "Igihe basabye",
+      "columnActions": "Ibikorwa",
+      "approve": "Emeza",
+      "revoke": "Hagarika",
+      "revoked": "Byahagaritswe",
+      "confirmRevoke": "Hagarika iki gikoresho? Ukoresha azasubira kucyandikisha."
+    },
+    "alerts": {
+      "showResolved": "Erekana ibyakemutse",
+      "noAlerts": "Nta menyesha rihari",
+      "noUnresolvedAlerts": "Nta menyesha ritakemutse",
+      "resolve": "Kemura",
+      "resolvedPrefix": "Byakemutse",
+      "userLabel": "Ukoresha: {{name}} (@{{username}})"
+    },
+    "auditLogs": {
+      "title": "Raporo z'Ibikorwa",
+      "filterPlaceholder": "Yungurura ukurikije igikorwa…",
+      "columnTime": "Igihe",
+      "columnUser": "Ukoresha",
+      "columnAction": "Igikorwa",
+      "columnTarget": "Icyagengwa",
+      "columnIp": "IP",
+      "noLogs": "Nta raporo zabonetse",
+      "prev": "Ibanziriza",
+      "next": "Ikurikira",
+      "paginationOf": "kuri"
+    }
+  },
+  "settings": {
+    "title": "Igenamiterere",
+    "backToChat": "← Subira ku kiganiro",
+    "profile": {
+      "title": "Umwirondoro",
+      "changePhoto": "Hindura ifoto",
+      "fullNameLabel": "Amazina yuzuye",
+      "usernameLabel": "Izina ry'ukoresha",
+      "bioLabel": "Ibisobanuro",
+      "bioPlaceholder": "Vuga make ibikwerekeye",
+      "statusLabel": "Ubutumwa bw'imiterere",
+      "statusPlaceholder": "Witekereza iki?",
+      "save": "Bika umwirondoro",
+      "saved": "Umwirondoro wavuguruwe",
+      "failed": "Kuvugurura umwirondoro ntibyakunze",
+      "avatarFailed": "Kuvugurura ifoto ntibyakunze"
+    },
+    "appearance": {
+      "title": "Imigaragarire",
+      "theme": "Insanganyamatsiko",
+      "themeDark": "Umwijima",
+      "themeLight": "Urumuri",
+      "themeSystem": "Sisitemu",
+      "themeWipNote": "Urumuri na Sisitemu ntibirahindura imigaragarire — Umwijima gusa ni wo ukora muri iki gihe.",
+      "language": "Ururimi"
+    },
+    "notifications": {
+      "title": "Imenyesha",
+      "sound": "Ijwi igihe uhamagarwa cyangwa wakira ubutumwa",
+      "vibrate": "Kunyeganyega igihe uhamagarwa cyangwa wakira ubutumwa"
+    },
+    "privacy": {
+      "title": "Ibanga",
+      "readReceipts": "Ohereza imenyesha ko wasomye",
+      "showTyping": "Erekana igihe wandika"
+    },
+    "chat": {
+      "title": "Ikiganiro",
+      "autoDownload": "Kuramo itangazamakuru byikoresha",
+      "textScale": "Ingano y'inyandiko y'ubutumwa",
+      "textScaleSmall": "Nto",
+      "textScaleMedium": "Hagati",
+      "textScaleLarge": "Nini"
+    },
+    "security": {
+      "title": "Umutekano",
+      "currentPasswordLabel": "Ijambo ry'ibanga rikoreshwa",
+      "newPasswordLabel": "Ijambo ry'ibanga rishya",
+      "confirmPasswordLabel": "Emeza ijambo ry'ibanga rishya",
+      "changePassword": "Hindura ijambo ry'ibanga",
+      "mismatch": "Amagambo y'ibanga ntahuye",
+      "success": "Ijambo ry'ibanga ryavuguruwe",
+      "failed": "Kuvugurura ijambo ry'ibanga ntibyakunze"
+    },
+    "settingsSaved": "Igenamiterere ryavuguruwe",
+    "settingsFailed": "Kuvugurura igenamiterere ntibyakunze"
+  }
+}
