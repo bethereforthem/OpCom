@@ -1,0 +1,342 @@
+{
+  "auth": {
+    "login": {
+      "tagline": "Communications internes sécurisées",
+      "identifierLabel": "Nom d'utilisateur, e-mail ou ID employé",
+      "identifierPlaceholder": "Entrez votre identifiant",
+      "passwordLabel": "Mot de passe",
+      "passwordPlaceholder": "Entrez votre mot de passe",
+      "signingIn": "Connexion…",
+      "signIn": "Se connecter",
+      "needAccount": "Besoin d'un compte ?",
+      "signUpLink": "S'inscrire",
+      "restricted": "Accès réservé au personnel autorisé",
+      "failed": "Échec de la connexion. Veuillez réessayer."
+    },
+    "signup": {
+      "title": "Créer un compte",
+      "subtitle": "L'accès s'active après approbation de l'administrateur",
+      "fullNameLabel": "Nom complet",
+      "fullNamePlaceholder": "Jane Doe",
+      "usernameLabel": "Nom d'utilisateur",
+      "usernamePlaceholder": "jdoe",
+      "emailLabel": "E-mail",
+      "optionalPlaceholder": "optionnel",
+      "staffIdLabel": "ID employé",
+      "passwordLabel": "Mot de passe",
+      "passwordPlaceholder": "8 caractères minimum",
+      "creating": "Création du compte…",
+      "create": "Créer un compte",
+      "haveAccount": "Vous avez déjà un compte ?",
+      "signInLink": "Se connecter",
+      "failed": "Échec de l'inscription. Veuillez réessayer.",
+      "doneTitle": "Compte créé",
+      "doneMessage": "Un administrateur doit approuver votre compte avant que vous puissiez vous connecter.",
+      "backToSignIn": "Retour à la connexion"
+    },
+    "mfa": {
+      "title": "Vérification requise",
+      "totpInstructions": "Entrez le code à 6 chiffres de votre application d'authentification.",
+      "emailInstructions": "Entrez le code à 6 chiffres envoyé à votre e-mail.",
+      "verifying": "Vérification…",
+      "verify": "Vérifier",
+      "backToLogin": "Retour à la connexion",
+      "invalidCode": "Code invalide. Veuillez réessayer."
+    }
+  },
+  "common": {
+    "appName": "OpCom",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "loading": "Chargement…",
+    "signOut": "Se déconnecter",
+    "unknown": "Inconnu",
+    "media": "Média",
+    "search": "Rechercher",
+    "searching": "Recherche…",
+    "justNow": "à l'instant"
+  },
+  "chat": {
+    "header": {
+      "connected": "Connecté",
+      "reconnecting": "Reconnexion…",
+      "searchMessages": "Rechercher des messages",
+      "admin": "Administration"
+    },
+    "newChat": {
+      "title": "Nouvelle conversation",
+      "type": "Type",
+      "private": "Privé",
+      "group": "Groupe",
+      "groupNameLabel": "Nom du groupe",
+      "groupNamePlaceholder": "ex. Équipe Alpha",
+      "recipientLabel": "Nom d'utilisateur du destinataire",
+      "addMemberLabel": "Ajouter un membre (nom d'utilisateur)",
+      "usernamePlaceholder": "nom d'utilisateur",
+      "creating": "Création…",
+      "create": "Créer",
+      "failed": "Échec de la création de la conversation"
+    },
+    "members": "{{count}} membres",
+    "list": {
+      "title": "Messages",
+      "newConversation": "Nouvelle conversation",
+      "empty": "Aucune conversation pour le moment.",
+      "emptyHint": "Démarrez-en une ci-dessus.",
+      "archived": "Archivées",
+      "archive": "Archiver",
+      "unarchive": "Désarchiver",
+      "mute": "Mettre en sourdine…",
+      "unmute": "Réactiver le son",
+      "muteFor8h": "Sourdine pendant 8 heures",
+      "muteFor1w": "Sourdine pendant 1 semaine",
+      "muteAlways": "Sourdine permanente",
+      "moreOptions": "Plus d'options",
+      "muted": "En sourdine"
+    },
+    "thread": {
+      "selectConversation": "Sélectionnez une conversation pour commencer à discuter",
+      "disappearingOff": "Désactivé",
+      "disappearing24h": "24 heures",
+      "disappearing7d": "7 jours",
+      "disappearing90d": "90 jours",
+      "disappearingMessages": "Messages éphémères",
+      "disappearingRestricted": "Seuls les propriétaires/administrateurs du groupe peuvent modifier ceci",
+      "voiceCall": "Appel vocal",
+      "videoCall": "Appel vidéo",
+      "loadOlder": "Charger les messages plus anciens",
+      "isTyping": "est en train d'écrire…",
+      "areTyping": "sont en train d'écrire…"
+    },
+    "bubble": {
+      "youDeleted": "Vous avez supprimé ce message",
+      "messageDeleted": "Ce message a été supprimé",
+      "forwardedFrom": "Transféré de {{name}}",
+      "edited": "modifié",
+      "originalDeleted": "Message d'origine supprimé",
+      "photo": "Photo",
+      "audioType": "Audio",
+      "videoType": "Vidéo",
+      "documentType": "Document",
+      "tapToLoadImage": "Appuyez pour charger l'image",
+      "playAudio": "Lire l'audio",
+      "playVideo": "Lire la vidéo",
+      "downloadDocument": "Télécharger le document"
+    },
+    "input": {
+      "placeholder": "Tapez un message…",
+      "attachFile": "Joindre un fichier",
+      "scheduleMessage": "Programmer le message",
+      "sendAt": "Envoyer à",
+      "schedule": "Programmer",
+      "replyingTo": "Réponse à {{name}}",
+      "uploading": "Téléchargement…",
+      "uploadFailed": "Échec du téléchargement. Vérifiez le type et la taille du fichier.",
+      "everyoneInGroup": "Tout le monde dans ce groupe"
+    },
+    "actions": {
+      "forward": "Transférer",
+      "reply": "Répondre",
+      "edit": "Modifier",
+      "delete": "Supprimer",
+      "confirmDelete": "Supprimer ce message ? Cette action est irréversible.",
+      "react": "Réagir",
+      "moreEmoji": "Plus d'émojis"
+    },
+    "call": {
+      "calling": "Appel en cours…",
+      "mute": "Couper le son",
+      "unmute": "Réactiver le son",
+      "endCall": "Terminer l'appel",
+      "turnOnCamera": "Activer la caméra",
+      "turnOffCamera": "Désactiver la caméra",
+      "incomingCall": "Appel {{type}} entrant",
+      "audio": "audio",
+      "video": "vidéo",
+      "decline": "Refuser",
+      "accept": "Accepter",
+      "missedFrom": "Appel manqué de {{name}}",
+      "noAnswerFrom": "{{name}} n'a pas répondu"
+    },
+    "callHistory": {
+      "title": "Appels",
+      "empty": "Aucun appel pour le moment",
+      "missed": "Manqué",
+      "declined": "Refusé",
+      "answered": "Répondu",
+      "noAnswer": "Sans réponse",
+      "failed": "Échoué",
+      "outgoing": "Sortant",
+      "incoming": "Entrant"
+    },
+    "forward": {
+      "title": "Transférer le message",
+      "mediaMessage": "Message multimédia",
+      "noConversations": "Aucune conversation disponible",
+      "forwarding": "Transfert…",
+      "forward": "Transférer",
+      "failed": "Échec du transfert du message"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "empty": "Aucune notification"
+    },
+    "search": {
+      "title": "Rechercher des messages",
+      "textPlaceholder": "Rechercher du texte…",
+      "senderPlaceholder": "Nom d'utilisateur de l'expéditeur",
+      "anyType": "Tout type",
+      "text": "Texte",
+      "photos": "Photos",
+      "videos": "Vidéos",
+      "audio": "Audio",
+      "documents": "Documents",
+      "noResults": "Aucun résultat",
+      "noUserFound": "Aucun utilisateur trouvé correspondant à « {{username}} »",
+      "failed": "La recherche a échoué",
+      "inGroup": "dans {{name}}",
+      "inDirectMessage": "en message direct"
+    },
+    "scheduled": {
+      "title": "Programmés"
+    }
+  },
+  "admin": {
+    "layout": {
+      "title": "Administration OpCom",
+      "backToChat": "← Retour à la discussion",
+      "nav": {
+        "dashboard": "Tableau de bord",
+        "users": "Utilisateurs",
+        "devices": "Appareils",
+        "alerts": "Alertes de sécurité",
+        "auditLogs": "Journaux d'audit"
+      }
+    },
+    "dashboard": {
+      "title": "Vue d'ensemble du système",
+      "loadingStats": "Chargement des statistiques…",
+      "totalUsers": "Total utilisateurs",
+      "activeUsers": "Utilisateurs actifs",
+      "lockedAccounts": "Comptes verrouillés",
+      "activeSessions": "Sessions actives",
+      "totalMessages": "Total messages",
+      "todaySuffix": "{{count}} aujourd'hui",
+      "totalCalls": "Total appels",
+      "unresolvedAlerts": "Alertes non résolues",
+      "alertWarning_one": "alerte de sécurité non résolue nécessite votre attention.",
+      "alertWarning_other": "alertes de sécurité non résolues nécessitent votre attention."
+    },
+    "users": {
+      "searchPlaceholder": "Rechercher nom, e-mail, nom d'utilisateur…",
+      "columnUser": "Utilisateur",
+      "columnRole": "Rôle",
+      "columnStatus": "Statut",
+      "columnLastLogin": "Dernière connexion",
+      "columnJoined": "Inscrit le",
+      "columnActions": "Actions",
+      "statusLocked": "Verrouillé",
+      "statusInactive": "Inactif",
+      "statusActive": "Actif",
+      "failedAttempts": "{{count}} échecs",
+      "approve": "Approuver",
+      "lock": "Verrouiller",
+      "unlock": "Déverrouiller",
+      "noUsersFound": "Aucun utilisateur trouvé"
+    },
+    "devices": {
+      "title": "Gestion des appareils",
+      "tabPending": "en attente",
+      "tabActive": "actifs",
+      "tabRevoked": "révoqués",
+      "noDevices": "Aucun appareil {{status}}",
+      "columnDevice": "Appareil",
+      "columnUser": "Utilisateur",
+      "columnPlatform": "Plateforme",
+      "columnRequested": "Demandé le",
+      "columnActions": "Actions",
+      "approve": "Approuver",
+      "revoke": "Révoquer",
+      "revoked": "Révoqué",
+      "confirmRevoke": "Révoquer cet appareil ? L'utilisateur devra le réenregistrer."
+    },
+    "alerts": {
+      "showResolved": "Afficher les résolues",
+      "noAlerts": "Aucune alerte",
+      "noUnresolvedAlerts": "Aucune alerte non résolue",
+      "resolve": "Résoudre",
+      "resolvedPrefix": "Résolue",
+      "userLabel": "Utilisateur : {{name}} (@{{username}})"
+    },
+    "auditLogs": {
+      "title": "Journaux d'audit",
+      "filterPlaceholder": "Filtrer par action…",
+      "columnTime": "Heure",
+      "columnUser": "Utilisateur",
+      "columnAction": "Action",
+      "columnTarget": "Cible",
+      "columnIp": "IP",
+      "noLogs": "Aucun journal trouvé",
+      "prev": "Précédent",
+      "next": "Suivant",
+      "paginationOf": "sur"
+    }
+  },
+  "settings": {
+    "title": "Paramètres",
+    "backToChat": "← Retour à la discussion",
+    "profile": {
+      "title": "Profil",
+      "changePhoto": "Changer la photo",
+      "fullNameLabel": "Nom complet",
+      "usernameLabel": "Nom d'utilisateur",
+      "bioLabel": "Bio",
+      "bioPlaceholder": "Parlez un peu de vous",
+      "statusLabel": "Message de statut",
+      "statusPlaceholder": "À quoi pensez-vous ?",
+      "save": "Enregistrer le profil",
+      "saved": "Profil mis à jour",
+      "failed": "Échec de la mise à jour du profil",
+      "avatarFailed": "Échec de la mise à jour de la photo"
+    },
+    "appearance": {
+      "title": "Apparence",
+      "theme": "Thème",
+      "themeDark": "Sombre",
+      "themeLight": "Clair",
+      "themeSystem": "Système",
+      "themeWipNote": "Clair et Système ne changent pas encore l'apparence — seul Sombre s'affiche réellement aujourd'hui.",
+      "language": "Langue"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "sound": "Son pour les appels et messages entrants",
+      "vibrate": "Vibration pour les appels et messages entrants"
+    },
+    "privacy": {
+      "title": "Confidentialité",
+      "readReceipts": "Envoyer des accusés de lecture",
+      "showTyping": "Afficher quand vous écrivez"
+    },
+    "chat": {
+      "title": "Discussion",
+      "autoDownload": "Téléchargement automatique des médias",
+      "textScale": "Taille du texte des messages",
+      "textScaleSmall": "Petite",
+      "textScaleMedium": "Moyenne",
+      "textScaleLarge": "Grande"
+    },
+    "security": {
+      "title": "Sécurité",
+      "currentPasswordLabel": "Mot de passe actuel",
+      "newPasswordLabel": "Nouveau mot de passe",
+      "confirmPasswordLabel": "Confirmer le nouveau mot de passe",
+      "changePassword": "Changer le mot de passe",
+      "mismatch": "Les mots de passe ne correspondent pas",
+      "success": "Mot de passe mis à jour",
+      "failed": "Échec de la mise à jour du mot de passe"
+    },
+    "settingsSaved": "Paramètres mis à jour",
+    "settingsFailed": "Échec de la mise à jour des paramètres"
+  }
+}
