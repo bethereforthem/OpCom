@@ -1,0 +1,56 @@
+name: opcom_mobile
+description: OpCom Secure Internal Communications
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+
+  # HTTP
+  dio: ^5.7.0
+
+  # WebSockets
+  socket_io_client: ^3.0.2
+
+  # Secure token storage
+  flutter_secure_storage: ^9.2.4
+
+  # Local settings cache (instant restore on launch, before the network call)
+  shared_preferences: ^2.3.3
+
+  # State management
+  provider: ^6.1.2
+
+  # File picker for media upload
+  file_picker: ^8.1.7
+
+  # Image display
+  cached_network_image: ^3.4.1
+
+  # WebRTC voice/video calls
+  flutter_webrtc: ^0.12.5
+
+  # Date formatting
+  intl: ^0.20.2
+
+  # Permission handling
+  permission_handler: ^11.3.1
+
+  # Emoji picker for custom message reactions
+  emoji_picker_flutter: ^4.3.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  generate: true
