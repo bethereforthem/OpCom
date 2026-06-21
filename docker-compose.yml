@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  # ── Object storage (media files) ─────────────────────────────
+  minio:
+    image: minio/minio:latest
+    container_name: opcom-minio
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"    # S3 API  — used by the backend
+      - "9001:9001"    # Web UI  — open http://localhost:9001 in browser
+    environment:
+      MINIO_ROOT_USER:     opcom_admin
+      MINIO_ROOT_PASSWORD: opcom_strong_password_change_me
+    volumes:
+      - minio_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ── TURN server (WebRTC relay for voice/video calls) ──────────
+  coturn:
+    image: coturn/coturn:latest
+    container_name: opcom-coturn
+    network_mode: host        # must use host networking for TURN to work correctly
+    command: >
+      -n
+      --log-file=stdout
+      --min-port=49152
+      --max-port=65535
+      --realm=opcom.local
+      --use-auth-secret
+      --static-auth-secret=change_this_turn_secret_in_production
+      --no-tls
+      --no-dtls
+      --no-multicast-peers
+    restart: unless-stopped
+
+volumes:
+  minio_data:
