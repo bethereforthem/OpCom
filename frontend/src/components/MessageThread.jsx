@@ -4,6 +4,9 @@ import { useSocket } from '../contexts/SocketContext';
 import {
     getMessages, scheduleMessage, getScheduledMessages, cancelScheduledMessage, setDisappearing,
 } from '../api/client';
+import { formatDaySeparator, isSameDay } from '../utils/time';
+import Avatar from './Avatar';
+import { isEffectivelyMuted } from './ConversationList';
 import MessageBubble from './MessageBubble';
 import MessageInput from './MessageInput';
 import ForwardModal from './ForwardModal';
@@ -11,42 +14,94 @@ import ScheduledMessagesBar from './ScheduledMessagesBar';
 
 const DISAPPEARING_SECONDS = { '24h': 86400, '7d': 604800, '90d': 7776000 };
 
-// Header popover for the disappearing-messages setting.
-function DisappearingToggle({ seconds, canToggle, onSet }) {
+// Header "⋮" menu — disappearing messages, archive/mute, and (for groups)
+// leaving the conversation. Consolidated here so the header only shows
+// call buttons, search, and this one menu, matching WhatsApp Desktop.
+function ThreadMenu({
+    isGroup, isArchived, muted, disappearingSeconds, canToggleDisappearing,
+    onArchive, onUnarchive, onMute, onUnmute, onSetDisappearing, onLeave,
+}) {
     const { t } = useTranslation();
     const [open, setOpen] = useState(false);
+    const [submenu, setSubmenu] = useState(null); // null | 'mute' | 'disappearing'
 
+    const MUTE_OPTIONS = [
+        { value: '8h', label: t('chat.list.muteFor8h') },
+        { value: '1w', label: t('chat.list.muteFor1w') },
+        { value: 'always', label: t('chat.list.muteAlways') },
+    ];
     const DISAPPEARING_OPTIONS = [
         { value: null, label: t('chat.thread.disappearingOff') },
         { value: '24h', label: t('chat.thread.disappearing24h') },
         { value: '7d', label: t('chat.thread.disappearing7d') },
         { value: '90d', label: t('chat.thread.disappearing90d') },
     ];
-    const current = DISAPPEARING_OPTIONS.find(o => o.value ? DISAPPEARING_SECONDS[o.value] === seconds : !seconds)?.label;
+    const currentDisappearing = DISAPPEARING_OPTIONS.find(o => o.value ? DISAPPEARING_SECONDS[o.value] === disappearingSeconds : !disappearingSeconds)?.label;
+
+    function close() {
+        setOpen(false);
+        setSubmenu(null);
+    }
 
     return (
         <div className="relative">
             <button
-                onClick={() => canToggle && setOpen(o => !o)}
-                title={canToggle ? t('chat.thread.disappearingMessages') : t('chat.thread.disappearingRestricted')}
-                className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors
-                            ${seconds ? 'bg-indigo-600 hover:bg-indigo-500' : 'bg-gray-700 hover:bg-gray-600'}
-                            ${!canToggle ? 'opacity-50 cursor-not-allowed' : ''}`}
+                onClick={() => setOpen(o => !o)}
+                title={t('chat.thread.moreOptions')}
+                className="w-9 h-9 rounded-full bg-gray-700 hover:bg-gray-600 flex items-center justify-center transition-colors"
             >
-                <svg className="w-4 h-4 text-gray-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <svg className="w-4 h-4 text-gray-200" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M10 6a2 2 0 100-4 2 2 0 000 4zM10 12a2 2 0 100-4 2 2 0 000 4zM10 18a2 2 0 100-4 2 2 0 000 4z" />
                 </svg>
             </button>
 
-            {open && canToggle && (
-                <div className="absolute z-20 top-11 right-0 bg-gray-800 border border-gray-600 rounded-xl shadow-lg py-1 w-44">
+            {open && !submenu && (
+                <div className="absolute z-20 top-11 right-0 bg-gray-800 border border-gray-600 rounded-xl shadow-lg py-1 w-52 whitespace-nowrap">
+                    <button
+                        onClick={() => canToggleDisappearing && setSubmenu('disappearing')}
+                        disabled={!canToggleDisappearing}
+                        title={canToggleDisappearing ? '' : t('chat.thread.disappearingRestricted')}
+                        className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-700 ${canToggleDisappearing ? 'text-gray-200' : 'text-gray-500 cursor-not-allowed'}`}
+                    >
+                        {t('chat.thread.disappearingMessages')}
+                    </button>
+                    <button onClick={() => { close(); isArchived ? onUnarchive() : onArchive(); }} className="w-full text-left px-3 py-2 text-sm text-gray-200 hover:bg-gray-700">
+                        {isArchived ? t('chat.list.unarchive') : t('chat.list.archive')}
+                    </button>
+                    {muted ? (
+                        <button onClick={() => { close(); onUnmute(); }} className="w-full text-left px-3 py-2 text-sm text-gray-200 hover:bg-gray-700">
+                            {t('chat.list.unmute')}
+                        </button>
+                    ) : (
+                        <button onClick={() => setSubmenu('mute')} className="w-full text-left px-3 py-2 text-sm text-gray-200 hover:bg-gray-700">
+                            {t('chat.list.mute')}
+                        </button>
+                    )}
+                    {isGroup && (
+                        <button onClick={() => { close(); onLeave(); }} className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-gray-700">
+                            {t('chat.thread.leaveConversation')}
+                        </button>
+                    )}
+                </div>
+            )}
+
+            {open && submenu === 'mute' && (
+                <div className="absolute z-20 top-11 right-0 bg-gray-800 border border-gray-600 rounded-xl shadow-lg py-1 w-52 whitespace-nowrap">
+                    {MUTE_OPTIONS.map(opt => (
+                        <button key={opt.value} onClick={() => { close(); onMute(opt.value); }} className="w-full text-left px-3 py-2 text-sm text-gray-200 hover:bg-gray-700">
+                            {opt.label}
+                        </button>
+                    ))}
+                </div>
+            )}
+
+            {open && submenu === 'disappearing' && (
+                <div className="absolute z-20 top-11 right-0 bg-gray-800 border border-gray-600 rounded-xl shadow-lg py-1 w-52 whitespace-nowrap">
                     {DISAPPEARING_OPTIONS.map(opt => (
                         <button
                             key={opt.label}
-                            onClick={() => { setOpen(false); onSet(opt.value); }}
-                            className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-700
-                                        ${current === opt.label ? 'text-indigo-300' : 'text-gray-200'}`}
+                            onClick={() => { close(); onSetDisappearing(opt.value); }}
+                            className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-700 ${currentDisappearing === opt.label ? 'text-indigo-300' : 'text-gray-200'}`}
                         >
                             {opt.label}
                         </button>
@@ -68,7 +123,10 @@ function TypingIndicator({ typingUsers }) {
     );
 }
 
-export default function MessageThread({ conversation, currentUser, conversations, onInitiateCall }) {
+export default function MessageThread({
+    conversation, currentUser, conversations, onInitiateCall, onlineUserIds,
+    onSearchInThisChat, onArchive, onUnarchive, onMute, onUnmute, onLeave,
+}) {
     const { t }                   = useTranslation();
     const { on, emit }            = useSocket();
     const [messages, setMessages] = useState([]);
@@ -282,31 +340,33 @@ export default function MessageThread({ conversation, currentUser, conversations
         ? conversation.conversation_members?.find(m => m.users?.id !== currentUser.id)
         : null;
     const headerName = isGroup ? conversation.name : otherMember?.users?.full_name || t('common.unknown');
-    const memberCount = conversation.conversation_members?.length || 0;
+    const online = !isGroup && onlineUserIds?.has(otherMember?.users?.id);
+    const memberNames = (conversation.conversation_members ?? []).map(m => m.users?.full_name).filter(Boolean);
+    const participantPreview = memberNames.length > 3
+        ? `${memberNames.slice(0, 3).join(', ')} +${memberNames.length - 3}`
+        : memberNames.join(', ');
     const memberUsernames = new Set(
         (conversation.conversation_members ?? [])
             .map(m => m.users?.username?.toLowerCase())
             .filter(Boolean)
     );
+    const isArchived = !!conversation.archived_at;
 
     return (
         <div className="flex flex-col h-full">
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 bg-gray-800 border-b border-gray-700 flex-shrink-0">
-                <div>
-                    <h2 className="font-semibold text-white">{headerName}</h2>
-                    <p className="text-xs text-gray-400">
-                        {isGroup ? t('chat.members', { count: memberCount }) : otherMember?.users?.username || ''}
-                    </p>
+                <div className="flex items-center gap-3 min-w-0">
+                    <Avatar name={headerName} url={isGroup ? conversation.avatar_url : otherMember?.users?.avatar_url} online={online} />
+                    <div className="min-w-0">
+                        <h2 className="font-semibold text-white truncate">{headerName}</h2>
+                        <p className="text-xs text-gray-400 truncate">
+                            {isGroup ? participantPreview : (online ? t('chat.thread.online') : otherMember?.users?.username || '')}
+                        </p>
+                    </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                    <DisappearingToggle
-                        seconds={disappearingSeconds}
-                        canToggle={!isGroup || ['owner', 'admin'].includes(conversation.my_role)}
-                        onSet={handleSetDisappearing}
-                    />
-
+                <div className="flex items-center gap-2 flex-shrink-0">
                     {/* Call buttons — only for private conversations */}
                     {!isGroup && otherMember && (
                         <>
@@ -332,13 +392,42 @@ export default function MessageThread({ conversation, currentUser, conversations
                             </button>
                         </>
                     )}
+
+                    <button
+                        onClick={() => onSearchInThisChat?.(conversation.id)}
+                        title={t('chat.thread.searchInChat')}
+                        className="w-9 h-9 rounded-full bg-gray-700 hover:bg-gray-600 flex items-center justify-center transition-colors"
+                    >
+                        <svg className="w-4 h-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </button>
+
+                    <ThreadMenu
+                        isGroup={isGroup}
+                        isArchived={isArchived}
+                        muted={isEffectivelyMuted(conversation)}
+                        disappearingSeconds={disappearingSeconds}
+                        canToggleDisappearing={!isGroup || ['owner', 'admin'].includes(conversation.my_role)}
+                        onArchive={() => onArchive?.(conversation)}
+                        onUnarchive={() => onUnarchive?.(conversation)}
+                        onMute={duration => onMute?.(conversation, duration)}
+                        onUnmute={() => onUnmute?.(conversation)}
+                        onSetDisappearing={handleSetDisappearing}
+                        onLeave={() => onLeave?.(conversation)}
+                    />
                 </div>
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto px-4 py-4 bg-gray-900" onScroll={e => {
-                if (e.target.scrollTop < 60) loadMore();
-            }}>
+            <div
+                className="flex-1 overflow-y-auto px-4 py-4 bg-gray-900"
+                style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.035) 1px, transparent 0)', backgroundSize: '22px 22px' }}
+                onScroll={e => {
+                    if (e.target.scrollTop < 60) loadMore();
+                }}
+            >
                 {loading && (
                     <div className="text-center text-gray-600 text-sm py-2">{t('common.loading')}</div>
                 )}
@@ -348,24 +437,38 @@ export default function MessageThread({ conversation, currentUser, conversations
                         {t('chat.thread.loadOlder')}
                     </button>
                 )}
-                {messages.map(msg => (
-                    <MessageBubble
-                        key={msg.id}
-                        message={msg}
-                        isMine={msg.users?.id === currentUser.id || msg.sender_id === currentUser.id}
-                        currentUserId={currentUser.id}
-                        isEditing={editingId === msg.id}
-                        onStartEdit={m => setEditingId(m.id)}
-                        onSaveEdit={editMessage}
-                        onCancelEdit={() => setEditingId(null)}
-                        onDelete={deleteMessage}
-                        onReply={setReplyTarget}
-                        onForward={setForwardTarget}
-                        onReact={reactToMessage}
-                        onRemoveReaction={removeReaction}
-                        memberUsernames={memberUsernames}
-                    />
-                ))}
+                {messages.map((msg, idx) => {
+                    const prevMsg = messages[idx - 1];
+                    const showDateSeparator = !prevMsg || !isSameDay(prevMsg.created_at, msg.created_at);
+                    return (
+                        <div key={msg.id}>
+                            {showDateSeparator && (
+                                <div className="flex justify-center my-3">
+                                    <span className="text-xs text-gray-400 bg-gray-800/80 rounded-full px-3 py-1">
+                                        {formatDaySeparator(msg.created_at)}
+                                    </span>
+                                </div>
+                            )}
+                            <div className="animate-message-in">
+                                <MessageBubble
+                                    message={msg}
+                                    isMine={msg.users?.id === currentUser.id || msg.sender_id === currentUser.id}
+                                    currentUserId={currentUser.id}
+                                    isEditing={editingId === msg.id}
+                                    onStartEdit={m => setEditingId(m.id)}
+                                    onSaveEdit={editMessage}
+                                    onCancelEdit={() => setEditingId(null)}
+                                    onDelete={deleteMessage}
+                                    onReply={setReplyTarget}
+                                    onForward={setForwardTarget}
+                                    onReact={reactToMessage}
+                                    onRemoveReaction={removeReaction}
+                                    memberUsernames={memberUsernames}
+                                />
+                            </div>
+                        </div>
+                    );
+                })}
                 <TypingIndicator typingUsers={typingUsers} />
                 <div ref={bottomRef} />
             </div>
