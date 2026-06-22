@@ -75,6 +75,9 @@ export const unmuteConversation = (id) =>
 export const setDisappearing = (id, duration) =>
     api.patch(`/conversations/${id}/disappearing`, { duration });
 
+export const leaveConversation = (id) =>
+    api.delete(`/conversations/${id}/leave`);
+
 // ── Scheduled messages ────────────────────────────────────────
 export const scheduleMessage = (conversationId, payload) =>
     api.post(`/conversations/${conversationId}/scheduled-messages`, payload);
