@@ -9,6 +9,7 @@ import '../auth/auth_provider.dart';
 import '../calls/call_history_screen.dart';
 import '../chat/chat_screen.dart';
 import '../notifications/notifications_screen.dart';
+import '../people/people_tab.dart';
 import '../profile/profile_settings_screen.dart';
 import '../search/search_screen.dart';
 import 'conversation_actions_sheet.dart';
@@ -25,16 +26,18 @@ class ConversationsScreen extends StatefulWidget {
   @override State<ConversationsScreen> createState() => _ConversationsScreenState();
 }
 
-class _ConversationsScreenState extends State<ConversationsScreen> {
+class _ConversationsScreenState extends State<ConversationsScreen> with SingleTickerProviderStateMixin {
   List<Map<String, dynamic>> _conversations = [];
   List<Map<String, dynamic>> _archivedConversations = [];
   bool _showArchived = false;
   bool _loading = true;
   int _unreadNotifications = 0;
+  late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 2, vsync: this);
     _load();
     _loadUnreadCount();
     SocketService.on('new_message', _onNewMessage);
@@ -43,6 +46,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
 
   @override
   void dispose() {
+    _tabController.dispose();
     SocketService.off('new_message');
     SocketService.off('mention_received');
     super.dispose();
@@ -177,36 +181,61 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
             )),
           ),
         ],
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: [
+            Tab(icon: const Icon(Icons.chat_bubble_rounded), text: l10n.homeTabChats),
+            Tab(icon: const Icon(Icons.people_alt_rounded), text: l10n.homeTabPeople),
+          ],
+        ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showNewConvDialog(context, myId),
-        tooltip: l10n.convNewConversationTooltip,
-        child: const Icon(Icons.add_rounded),
+      floatingActionButton: AnimatedBuilder(
+        animation: _tabController.animation!,
+        builder: (_, __) {
+          final onChatsTab = (_tabController.animation!.value).round() == 0;
+          return onChatsTab
+              ? FloatingActionButton(
+                  onPressed: () => _showNewConvDialog(context, myId),
+                  tooltip: l10n.convNewConversationTooltip,
+                  child: const Icon(Icons.add_rounded),
+                )
+              : const SizedBox.shrink();
+        },
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : (_conversations.isEmpty && _archivedConversations.isEmpty)
-              ? Center(child: Text(l10n.convEmpty,
-                    textAlign: TextAlign.center, style: const TextStyle(color: AppTheme.textSub)))
-              : RefreshIndicator(
-                  onRefresh: _load,
-                  child: ListView(
-                    children: [
-                      if (_archivedConversations.isNotEmpty)
-                        ListTile(
-                          title: Text(l10n.convArchivedCount(_archivedConversations.length),
-                              style: const TextStyle(color: AppTheme.textSub)),
-                          trailing: Icon(_showArchived ? Icons.expand_less_rounded : Icons.expand_more_rounded,
-                              color: AppTheme.textSub),
-                          onTap: () => setState(() => _showArchived = !_showArchived),
-                        ),
-                      if (_showArchived)
-                        ..._archivedConversations.map((c) => _buildConvTile(c, myId, isArchived: true)),
-                      ..._conversations.map((c) => _buildConvTile(c, myId, isArchived: false)),
-                    ],
-                  ),
-                ),
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          _buildChatsTab(l10n, myId),
+          PeopleTab(myId: myId ?? ''),
+        ],
+      ),
     );
+  }
+
+  Widget _buildChatsTab(AppLocalizations l10n, String? myId) {
+    return _loading
+        ? const Center(child: CircularProgressIndicator())
+        : (_conversations.isEmpty && _archivedConversations.isEmpty)
+            ? Center(child: Text(l10n.convEmpty,
+                  textAlign: TextAlign.center, style: const TextStyle(color: AppTheme.textSub)))
+            : RefreshIndicator(
+                onRefresh: _load,
+                child: ListView(
+                  children: [
+                    if (_archivedConversations.isNotEmpty)
+                      ListTile(
+                        title: Text(l10n.convArchivedCount(_archivedConversations.length),
+                            style: const TextStyle(color: AppTheme.textSub)),
+                        trailing: Icon(_showArchived ? Icons.expand_less_rounded : Icons.expand_more_rounded,
+                            color: AppTheme.textSub),
+                        onTap: () => setState(() => _showArchived = !_showArchived),
+                      ),
+                    if (_showArchived)
+                      ..._archivedConversations.map((c) => _buildConvTile(c, myId, isArchived: true)),
+                    ..._conversations.map((c) => _buildConvTile(c, myId, isArchived: false)),
+                  ],
+                ),
+              );
   }
 
   Widget _buildConvTile(Map<String, dynamic> conv, String? myId, {required bool isArchived}) {
