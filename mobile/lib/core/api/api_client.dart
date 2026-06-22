@@ -73,6 +73,8 @@ class ApiClient {
   static Future<Response> lookupUser(String identifier) =>
       _dio.get('/users/lookup', queryParameters: {'identifier': identifier});
 
+  static Future<Response> getUsers() => _dio.get('/users');
+
   // ── Conversations ────────────────────────────────────────────
   static Future<Response> getConversations({bool archived = false}) =>
       _dio.get('/conversations', queryParameters: archived ? {'archived': true} : {});
