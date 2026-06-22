@@ -79,7 +79,7 @@
     },
     "members": "abanyamuryango {{count}}",
     "list": {
-      "title": "Ubutumwa",
+      "title": "Ibiganiro",
       "newConversation": "Ikiganiro gishya",
       "empty": "Nta kiganiro urafite.",
       "emptyHint": "Tangira ikimwe hejuru.",
@@ -92,7 +92,15 @@
       "muteFor1w": "Hagarika ijwi icyumweru 1",
       "muteAlways": "Hagarika ijwi burundu",
       "moreOptions": "Ibindi byo guhitamo",
-      "muted": "Ijwi rihagaze"
+      "muted": "Ijwi rihagaze",
+      "searchPlaceholder": "Shakisha ibiganiro",
+      "filterAll": "Byose",
+      "filterUnread": "Ntiwasomye",
+      "filterFavorites": "Ibikunzwe",
+      "you": "Wowe",
+      "pin": "Ongeraho ibikunzwe",
+      "unpin": "Kuraho ibikunzwe",
+      "noMatches": "Nta gisubizo cyabonetse"
     },
     "thread": {
       "selectConversation": "Hitamo ikiganiro kugira ngo utangire kuvugana",
@@ -106,7 +114,14 @@
       "videoCall": "Guhamagara kuri videwo",
       "loadOlder": "Reba ubutumwa bwa kera",
       "isTyping": "ariko yandika…",
-      "areTyping": "bariko bandika…"
+      "areTyping": "bariko bandika…",
+      "today": "Uyu munsi",
+      "yesterday": "Ejo hashize",
+      "online": "Arahari",
+      "searchInChat": "Shakisha muri iki kiganiro",
+      "moreOptions": "Ibindi byo guhitamo",
+      "leaveConversation": "Gusohoka mu kiganiro",
+      "confirmLeave": "Gusohoka muri iki kiganiro? Uzagomba kongera kwinjizwamo kugira ngo ugarukemo."
     },
     "bubble": {
       "youDeleted": "Wasibye ubu butumwa",
@@ -132,7 +147,13 @@
       "replyingTo": "Usubiza {{name}}",
       "uploading": "Birimo kohereza…",
       "uploadFailed": "Kohereza ntibyakunze. Reba ubwoko n'ingano ya dosiye.",
-      "everyoneInGroup": "Bose muri iri tsinda"
+      "everyoneInGroup": "Bose muri iri tsinda",
+      "emojiPicker": "Ibishushanyo",
+      "voiceMessage": "Ubutumwa bw'ijwi",
+      "recording": "Birimo gufata ijwi…",
+      "cancelRecording": "Hagarika gufata ijwi",
+      "sendVoiceMessage": "Ohereza ubutumwa bw'ijwi",
+      "micPermissionDenied": "Kwemerera mikoro birakenewe kugira ngo wohereze ubutumwa bw'ijwi."
     },
     "actions": {
       "forward": "Ohereza",
@@ -183,6 +204,7 @@
     },
     "search": {
       "title": "Shakisha ubutumwa",
+      "scopedToChat": "Ushakisha muri iki kiganiro",
       "textPlaceholder": "Shakisha amagambo…",
       "senderPlaceholder": "Izina ry'ukoresha woherereje",
       "anyType": "Ubwoko bwose",
