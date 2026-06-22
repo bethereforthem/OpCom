@@ -4,8 +4,9 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { useSocket } from '../contexts/SocketContext';
 import { useWebRTC } from '../hooks/useWebRTC';
+import usePinnedConversations from '../hooks/usePinnedConversations';
 import {
-    getConversations, createConversation, lookupUser,
+    getConversations, createConversation, lookupUser, leaveConversation,
     archiveConversation, unarchiveConversation, muteConversation, unmuteConversation,
 } from '../api/client';
 import ConversationList from '../components/ConversationList';
@@ -106,6 +107,10 @@ export default function ChatPage() {
     const [activeConv, setActiveConv]       = useState(null);
     const [showNewChat, setShowNewChat]     = useState(false);
     const [showSearch, setShowSearch]       = useState(false);
+    const [searchScopeConvId, setSearchScopeConvId] = useState(null);
+    const [onlineUserIds, setOnlineUserIds] = useState(() => new Set());
+
+    const { isPinned, togglePin } = usePinnedConversations(user?.id);
 
     // Load conversations on mount
     useEffect(() => {
@@ -113,27 +118,54 @@ export default function ChatPage() {
         getConversations(true).then(r => setArchivedConversations(r.data.conversations || []));
     }, []);
 
+    // Online presence — populated from the existing presence socket events
+    // (already broadcast by the backend; just wasn't consumed on web before).
+    useEffect(() => {
+        const unsubs = [
+            on('contacts_online', ({ user_ids }) => setOnlineUserIds(new Set(user_ids))),
+            on('presence_update', ({ user_id, status }) => {
+                setOnlineUserIds(prev => {
+                    const next = new Set(prev);
+                    status === 'online' ? next.add(user_id) : next.delete(user_id);
+                    return next;
+                });
+            }),
+        ];
+        return () => unsubs.forEach(u => u?.());
+    }, [on]);
+
     // Update conversation list order when a new message arrives. If the
     // conversation was archived, the backend auto-unarchives it for other
     // members on new activity — mirror that by moving it back into the
-    // active list here too.
+    // active list here too. Unread count is bumped client-side here (not
+    // mine, and not the conversation currently open) so the sidebar badge
+    // updates live without a full refetch.
     useEffect(() => {
         return on('new_message', msg => {
+            const isMine = msg.sender_id === user?.id || msg.users?.id === user?.id;
+            const isActive = msg.conversation_id === activeConv?.id;
+            const bump = c => ({
+                ...c,
+                updated_at: msg.created_at,
+                last_message: msg,
+                unread_count: (!isMine && !isActive) ? (c.unread_count ?? 0) + 1 : (c.unread_count ?? 0),
+            });
+
             setConversations(prev => {
                 const idx = prev.findIndex(c => c.id === msg.conversation_id);
                 if (idx !== -1) {
-                    const updated = { ...prev[idx], updated_at: msg.created_at };
+                    const updated = bump(prev[idx]);
                     const rest = prev.filter((_, i) => i !== idx);
                     return [updated, ...rest];
                 }
                 const archivedIdx = archivedConversations.findIndex(c => c.id === msg.conversation_id);
                 if (archivedIdx === -1) return prev;
-                const reactivated = { ...archivedConversations[archivedIdx], updated_at: msg.created_at, archived_at: null };
+                const reactivated = { ...bump(archivedConversations[archivedIdx]), archived_at: null };
                 setArchivedConversations(a => a.filter((_, i) => i !== archivedIdx));
                 return [reactivated, ...prev];
             });
         });
-    }, [on, archivedConversations]);
+    }, [on, archivedConversations, activeConv, user]);
 
     function patchConv(id, patch) {
         setConversations(prev => prev.map(c => c.id === id ? { ...c, ...patch } : c));
@@ -173,10 +205,31 @@ export default function ChatPage() {
         webrtc.initiateCall(peer.id, peer, type);
     }
 
+    // Selecting a conversation clears its unread badge immediately, without
+    // waiting on a server round-trip (the per-message read receipts still
+    // happen normally inside MessageThread).
+    function selectConversation(conv) {
+        setActiveConv(conv);
+        if (conv) patchConv(conv.id, { unread_count: 0 });
+    }
+
     function openConversationById(conversationId) {
         const conv = conversations.find(c => c.id === conversationId);
-        if (conv) setActiveConv(conv);
+        if (conv) selectConversation(conv);
         setShowSearch(false);
+    }
+
+    function openSearchInChat(conversationId) {
+        setSearchScopeConvId(conversationId);
+        setShowSearch(true);
+    }
+
+    async function handleLeave(conv) {
+        if (!window.confirm(t('chat.thread.confirmLeave'))) return;
+        await leaveConversation(conv.id);
+        setConversations(prev => prev.filter(c => c.id !== conv.id));
+        setArchivedConversations(prev => prev.filter(c => c.id !== conv.id));
+        if (activeConv?.id === conv.id) setActiveConv(null);
     }
 
     return (
@@ -200,7 +253,7 @@ export default function ChatPage() {
                         <span className="text-xs text-gray-400">{connected ? t('chat.header.connected') : t('chat.header.reconnecting')}</span>
                     </div>
 
-                    <button onClick={() => setShowSearch(true)} title={t('chat.header.searchMessages')}
+                    <button onClick={() => { setSearchScopeConvId(null); setShowSearch(true); }} title={t('chat.header.searchMessages')}
                         className="w-8 h-8 rounded-full bg-gray-700 hover:bg-gray-600 flex items-center justify-center transition-colors">
                         <svg className="w-4 h-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -241,13 +294,16 @@ export default function ChatPage() {
                         conversations={conversations}
                         archivedConversations={archivedConversations}
                         activeId={activeConv?.id}
-                        onSelect={setActiveConv}
+                        onSelect={selectConversation}
                         currentUserId={user?.id}
                         onNewChat={() => setShowNewChat(true)}
                         onArchive={handleArchive}
                         onUnarchive={handleUnarchive}
                         onMute={handleMute}
                         onUnmute={handleUnmute}
+                        isPinned={isPinned}
+                        onTogglePin={conv => togglePin(conv.id)}
+                        onlineUserIds={onlineUserIds}
                     />
                 </div>
 
@@ -258,6 +314,13 @@ export default function ChatPage() {
                         currentUser={user}
                         conversations={conversations}
                         onInitiateCall={handleInitiateCall}
+                        onlineUserIds={onlineUserIds}
+                        onSearchInThisChat={openSearchInChat}
+                        onArchive={handleArchive}
+                        onUnarchive={handleUnarchive}
+                        onMute={handleMute}
+                        onUnmute={handleUnmute}
+                        onLeave={handleLeave}
                     />
                 </div>
             </div>
@@ -265,8 +328,9 @@ export default function ChatPage() {
             {/* Modals */}
             {showSearch && (
                 <SearchPanel
-                    onClose={() => setShowSearch(false)}
+                    onClose={() => { setShowSearch(false); setSearchScopeConvId(null); }}
                     onOpenConversation={openConversationById}
+                    conversationId={searchScopeConvId}
                 />
             )}
             {showNewChat && (
