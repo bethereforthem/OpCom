@@ -8,7 +8,7 @@ function snippet(msg, t) {
     return { image: t('chat.bubble.photo'), audio: t('chat.bubble.audioType'), video: t('chat.bubble.videoType'), document: t('chat.bubble.documentType') }[msg.type] || t('common.media');
 }
 
-export default function SearchPanel({ onClose, onOpenConversation }) {
+export default function SearchPanel({ onClose, onOpenConversation, conversationId }) {
     const { t } = useTranslation();
     const [q, setQ]               = useState('');
     const [senderUsername, setSenderUsername] = useState('');
@@ -52,6 +52,7 @@ export default function SearchPanel({ onClose, onOpenConversation }) {
                 from_date: fromDate || undefined,
                 to_date: toDate || undefined,
                 media_type: mediaType || undefined,
+                conversation_id: conversationId || undefined,
             });
             setResults(data.messages);
         } catch {
@@ -65,7 +66,10 @@ export default function SearchPanel({ onClose, onOpenConversation }) {
         <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60">
             <div className="bg-gray-800 rounded-2xl p-6 w-[32rem] max-h-[80vh] flex flex-col border border-gray-700 shadow-2xl">
                 <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-white font-semibold text-lg">{t('chat.search.title')}</h3>
+                    <div>
+                        <h3 className="text-white font-semibold text-lg">{t('chat.search.title')}</h3>
+                        {conversationId && <p className="text-xs text-indigo-400 mt-0.5">{t('chat.search.scopedToChat')}</p>}
+                    </div>
                     <button onClick={onClose} className="text-gray-400 hover:text-white text-sm">✕</button>
                 </div>
 
