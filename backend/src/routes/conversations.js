@@ -33,6 +33,9 @@ router.get('/', requireAuth, async (req, res) => {
 
     if (error) return res.status(500).json({ error: 'Failed to fetch conversations' });
 
+    const convIds = data.map(d => d.conversations.id);
+    const { lastMessageByConv, unreadCountByConv } = await loadConversationExtras(convIds, req.user.id);
+
     res.json({
         conversations: data.map(d => ({
             ...d.conversations,
@@ -40,9 +43,47 @@ router.get('/', requireAuth, async (req, res) => {
             is_muted: d.is_muted,
             muted_until: d.muted_until,
             my_role: d.role,
+            last_message: lastMessageByConv[d.conversations.id] ?? null,
+            unread_count: unreadCountByConv[d.conversations.id] ?? 0,
         })),
     });
 });
+
+// Last-message preview (for the sidebar row) and unread counts, computed
+// from the existing messages/message_status tables — no schema changes.
+// `last_message` carries enough of message_status to render delivery ticks
+// when the caller was the sender, same as the in-thread bubble does.
+async function loadConversationExtras(convIds, myId) {
+    if (!convIds.length) return { lastMessageByConv: {}, unreadCountByConv: {} };
+
+    const [{ data: recentMessages }, { data: incoming }] = await Promise.all([
+        supabase
+            .from('messages')
+            .select('id, conversation_id, sender_id, type, content, is_deleted, created_at, message_status ( user_id, read_at, delivered_at )')
+            .in('conversation_id', convIds)
+            .order('created_at', { ascending: false })
+            .limit(500),
+        supabase
+            .from('messages')
+            .select('id, conversation_id, message_status ( user_id, read_at )')
+            .in('conversation_id', convIds)
+            .neq('sender_id', myId)
+            .eq('is_deleted', false),
+    ]);
+
+    const lastMessageByConv = {};
+    for (const m of recentMessages ?? []) {
+        if (!(m.conversation_id in lastMessageByConv)) lastMessageByConv[m.conversation_id] = m;
+    }
+
+    const unreadCountByConv = {};
+    for (const m of incoming ?? []) {
+        const isUnread = !m.message_status?.some(s => s.user_id === myId && s.read_at);
+        if (isUnread) unreadCountByConv[m.conversation_id] = (unreadCountByConv[m.conversation_id] ?? 0) + 1;
+    }
+
+    return { lastMessageByConv, unreadCountByConv };
+}
 
 // ── POST /conversations ────────────────────────────────────────
 // Create a private (2-person) or group conversation
