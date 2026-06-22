@@ -29,3 +29,24 @@ export function formatDateTime(dateStr) {
 export function formatScheduledTime(dateStr) {
     return new Date(dateStr).toLocaleString(i18n.language, { dateStyle: 'medium', timeStyle: 'short' });
 }
+
+const sameDay = (a, b) => a.toDateString() === b.toDateString();
+
+// Label for a date-separator pill between messages sent on different days.
+export function formatDaySeparator(dateStr) {
+    const d = new Date(dateStr);
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(today.getDate() - 1);
+
+    if (sameDay(d, today)) return i18n.t('chat.thread.today');
+    if (sameDay(d, yesterday)) return i18n.t('chat.thread.yesterday');
+    return d.toLocaleDateString(i18n.language, {
+        day: 'numeric', month: 'long',
+        year: d.getFullYear() !== today.getFullYear() ? 'numeric' : undefined,
+    });
+}
+
+export function isSameDay(dateStrA, dateStrB) {
+    return sameDay(new Date(dateStrA), new Date(dateStrB));
+}
