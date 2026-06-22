@@ -544,6 +544,36 @@ abstract class AppLocalizations {
   /// **'Messages'**
   String get convTitle;
 
+  /// No description provided for @homeTabChats.
+  ///
+  /// In en, this message translates to:
+  /// **'Chats'**
+  String get homeTabChats;
+
+  /// No description provided for @homeTabPeople.
+  ///
+  /// In en, this message translates to:
+  /// **'People'**
+  String get homeTabPeople;
+
+  /// No description provided for @peopleSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search people'**
+  String get peopleSearchHint;
+
+  /// No description provided for @peopleEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No one else here yet.'**
+  String get peopleEmpty;
+
+  /// No description provided for @peopleNoResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No matches found'**
+  String get peopleNoResults;
+
   /// No description provided for @convNewConversationTooltip.
   ///
   /// In en, this message translates to:
