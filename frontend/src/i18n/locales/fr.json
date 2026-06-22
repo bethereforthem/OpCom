@@ -79,7 +79,7 @@
     },
     "members": "{{count}} membres",
     "list": {
-      "title": "Messages",
+      "title": "Discussions",
       "newConversation": "Nouvelle conversation",
       "empty": "Aucune conversation pour le moment.",
       "emptyHint": "Démarrez-en une ci-dessus.",
@@ -92,7 +92,15 @@
       "muteFor1w": "Sourdine pendant 1 semaine",
       "muteAlways": "Sourdine permanente",
       "moreOptions": "Plus d'options",
-      "muted": "En sourdine"
+      "muted": "En sourdine",
+      "searchPlaceholder": "Rechercher des discussions",
+      "filterAll": "Toutes",
+      "filterUnread": "Non lues",
+      "filterFavorites": "Favoris",
+      "you": "Vous",
+      "pin": "Ajouter aux favoris",
+      "unpin": "Retirer des favoris",
+      "noMatches": "Aucun résultat"
     },
     "thread": {
       "selectConversation": "Sélectionnez une conversation pour commencer à discuter",
@@ -106,7 +114,14 @@
       "videoCall": "Appel vidéo",
       "loadOlder": "Charger les messages plus anciens",
       "isTyping": "est en train d'écrire…",
-      "areTyping": "sont en train d'écrire…"
+      "areTyping": "sont en train d'écrire…",
+      "today": "Aujourd'hui",
+      "yesterday": "Hier",
+      "online": "En ligne",
+      "searchInChat": "Rechercher dans cette discussion",
+      "moreOptions": "Plus d'options",
+      "leaveConversation": "Quitter la conversation",
+      "confirmLeave": "Quitter cette conversation ? Vous devrez être réinvité pour la rejoindre."
     },
     "bubble": {
       "youDeleted": "Vous avez supprimé ce message",
@@ -132,7 +147,13 @@
       "replyingTo": "Réponse à {{name}}",
       "uploading": "Téléchargement…",
       "uploadFailed": "Échec du téléchargement. Vérifiez le type et la taille du fichier.",
-      "everyoneInGroup": "Tout le monde dans ce groupe"
+      "everyoneInGroup": "Tout le monde dans ce groupe",
+      "emojiPicker": "Émoji",
+      "voiceMessage": "Message vocal",
+      "recording": "Enregistrement…",
+      "cancelRecording": "Annuler l'enregistrement",
+      "sendVoiceMessage": "Envoyer le message vocal",
+      "micPermissionDenied": "L'accès au microphone est requis pour enregistrer un message vocal."
     },
     "actions": {
       "forward": "Transférer",
@@ -183,6 +204,7 @@
     },
     "search": {
       "title": "Rechercher des messages",
+      "scopedToChat": "Recherche dans cette discussion",
       "textPlaceholder": "Rechercher du texte…",
       "senderPlaceholder": "Nom d'utilisateur de l'expéditeur",
       "anyType": "Tout type",
