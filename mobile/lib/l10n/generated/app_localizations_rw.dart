@@ -245,6 +245,21 @@ class AppLocalizationsRw extends AppLocalizations {
   String get convTitle => 'Ubutumwa';
 
   @override
+  String get homeTabChats => 'Ibiganiro';
+
+  @override
+  String get homeTabPeople => 'Abantu';
+
+  @override
+  String get peopleSearchHint => 'Shakisha abantu';
+
+  @override
+  String get peopleEmpty => 'Nta wundi muntu uhari kugeza ubu.';
+
+  @override
+  String get peopleNoResults => 'Nta gisubizo cyabonetse';
+
+  @override
   String get convNewConversationTooltip => 'Ikiganiro gishya';
 
   @override
