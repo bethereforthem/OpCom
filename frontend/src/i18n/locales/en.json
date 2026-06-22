@@ -79,7 +79,7 @@
     },
     "members": "{{count}} members",
     "list": {
-      "title": "Messages",
+      "title": "Chats",
       "newConversation": "New conversation",
       "empty": "No conversations yet.",
       "emptyHint": "Start a new one above.",
@@ -92,7 +92,15 @@
       "muteFor1w": "Mute for 1 week",
       "muteAlways": "Mute always",
       "moreOptions": "More options",
-      "muted": "Muted"
+      "muted": "Muted",
+      "searchPlaceholder": "Search chats",
+      "filterAll": "All",
+      "filterUnread": "Unread",
+      "filterFavorites": "Favorites",
+      "you": "You",
+      "pin": "Pin to favorites",
+      "unpin": "Unpin",
+      "noMatches": "No matches found"
     },
     "thread": {
       "selectConversation": "Select a conversation to start messaging",
@@ -106,7 +114,14 @@
       "videoCall": "Video call",
       "loadOlder": "Load older messages",
       "isTyping": "is typing…",
-      "areTyping": "are typing…"
+      "areTyping": "are typing…",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "online": "Online",
+      "searchInChat": "Search in this chat",
+      "moreOptions": "More options",
+      "leaveConversation": "Leave conversation",
+      "confirmLeave": "Leave this conversation? You'll need to be re-added to rejoin."
     },
     "bubble": {
       "youDeleted": "You deleted this message",
@@ -132,7 +147,13 @@
       "replyingTo": "Replying to {{name}}",
       "uploading": "Uploading…",
       "uploadFailed": "Upload failed. Check file type and size.",
-      "everyoneInGroup": "Everyone in this group"
+      "everyoneInGroup": "Everyone in this group",
+      "emojiPicker": "Emoji",
+      "voiceMessage": "Voice message",
+      "recording": "Recording…",
+      "cancelRecording": "Cancel recording",
+      "sendVoiceMessage": "Send voice message",
+      "micPermissionDenied": "Microphone access is required to record a voice message."
     },
     "actions": {
       "forward": "Forward",
@@ -183,6 +204,7 @@
     },
     "search": {
       "title": "Search messages",
+      "scopedToChat": "Searching in this chat",
       "textPlaceholder": "Search text…",
       "senderPlaceholder": "Sender username",
       "anyType": "Any type",
