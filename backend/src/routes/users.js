@@ -41,4 +41,22 @@ router.get('/lookup', requireAuth, requirePermission('send_message'), async (req
     });
 });
 
+// ── GET /users ──────────────────────────────────────────────────
+// Directory of active org members (excluding the caller), so a client
+// can browse and tap someone to start a chat — the "People" tab,
+// mirroring WhatsApp/Telegram's contacts list.
+router.get('/', requireAuth, requirePermission('send_message'), async (req, res) => {
+    const { data: users, error } = await supabase
+        .from('users')
+        .select('id, username, full_name, avatar_url, status_message')
+        .eq('is_active', true)
+        .eq('is_locked', false)
+        .neq('id', req.user.id)
+        .order('full_name', { ascending: true });
+
+    if (error) return res.status(500).json({ error: 'Failed to fetch users' });
+
+    res.json({ users });
+});
+
 module.exports = router;
