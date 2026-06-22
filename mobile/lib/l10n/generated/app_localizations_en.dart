@@ -243,6 +243,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get convTitle => 'Messages';
 
   @override
+  String get homeTabChats => 'Chats';
+
+  @override
+  String get homeTabPeople => 'People';
+
+  @override
+  String get peopleSearchHint => 'Search people';
+
+  @override
+  String get peopleEmpty => 'No one else here yet.';
+
+  @override
+  String get peopleNoResults => 'No matches found';
+
+  @override
   String get convNewConversationTooltip => 'New conversation';
 
   @override
