@@ -60,7 +60,7 @@ async function createMessage({
             expires_at: expiresAt,
         })
         .select(`
-            id, conversation_id, type, content, media_id, reply_to_id,
+            id, sender_id, conversation_id, type, content, media_id, reply_to_id,
             forwarded_from_id, edited_at, expires_at, created_at,
             users!sender_id ( id, username, full_name, avatar_url ),
             message_reactions ( user_id, emoji ),
