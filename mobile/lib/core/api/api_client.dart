@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import '../storage/secure_storage.dart';
@@ -113,10 +114,32 @@ class ApiClient {
           queryParameters: {'limit': 50, if (before != null) 'before': before});
 
   // ── Media ────────────────────────────────────────────────────
+
+  // Upload from a local file path (used for voice notes recorded to temp dir).
   static Future<Response> uploadMedia(String filePath, String mimeType) async {
+    final fileName = filePath.split('/').last;
+    DioMediaType contentType;
+    try {
+      contentType = DioMediaType.parse(mimeType);
+    } catch (_) {
+      contentType = DioMediaType.parse('application/octet-stream');
+    }
     final form = FormData.fromMap({
-      'file': await MultipartFile.fromFile(filePath, contentType:
-          DioMediaType.parse(mimeType)),
+      'file': await MultipartFile.fromFile(filePath, filename: fileName, contentType: contentType),
+    });
+    return _dio.post('/media/upload', data: form);
+  }
+
+  // Upload from in-memory bytes (used for file picker — avoids content:// URI issues on Android).
+  static Future<Response> uploadMediaBytes(Uint8List bytes, String fileName, String mimeType) async {
+    DioMediaType contentType;
+    try {
+      contentType = DioMediaType.parse(mimeType);
+    } catch (_) {
+      contentType = DioMediaType.parse('application/octet-stream');
+    }
+    final form = FormData.fromMap({
+      'file': MultipartFile.fromBytes(bytes, filename: fileName, contentType: contentType),
     });
     return _dio.post('/media/upload', data: form);
   }
