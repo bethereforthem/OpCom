@@ -25,7 +25,7 @@ router.get('/', requireAuth, async (req, res) => {
     let query = supabase
         .from('messages')
         .select(`
-            id, type, content, media_id, reply_to_id, forwarded_from_id,
+            id, sender_id, type, content, media_id, reply_to_id, forwarded_from_id,
             is_deleted, edited_at, system_event, system_params, created_at,
             users!sender_id ( id, username, full_name, avatar_url ),
             message_status ( user_id, delivered_at, read_at ),
