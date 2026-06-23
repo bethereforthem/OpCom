@@ -1,6 +1,14 @@
 import 'dart:async';
+import 'dart:typed_data';
+import 'package:dio/dio.dart' as dio_pkg;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:open_filex/open_filex.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:audioplayers/audioplayers.dart';
+import 'voice_recorder_native.dart' if (dart.library.html) 'voice_recorder_web.dart';
 import '../../core/api/api_client.dart';
 import '../../core/socket/socket_service.dart';
 import '../../l10n/generated/app_localizations.dart';
@@ -32,6 +40,14 @@ class _ChatScreenState extends State<ChatScreen> {
   final _scheduledMessages = <Map<String, dynamic>>[];
   bool _showScheduled = false;
   int? _disappearingSeconds;
+
+  // Voice recording — platform-selected at compile time
+  final _recorder = VoiceRecorder();
+  bool _isRecording = false;
+  int  _recordSeconds = 0;
+  int  _recordDuration = 0;        // frozen when recording stops
+  Uint8List? _pendingVoiceBytes;   // bytes ready to send (stopped, not yet sent)
+  Timer? _recordTimer;
 
   String get _convId => widget.conversation['id'];
   bool get _isGroup => widget.conversation['type'] == 'group';
@@ -74,6 +90,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   void dispose() {
+    _recordTimer?.cancel();
     SocketService.off('new_message');
     SocketService.off('message_deleted');
     SocketService.off('message_edited');
@@ -84,6 +101,111 @@ class _ChatScreenState extends State<ChatScreen> {
     _textCtrl.dispose();
     super.dispose();
   }
+
+  // ── Voice recording ──────────────────────────────────────────
+
+  Future<void> _startVoiceRecording() async {
+    // On native, explicitly request mic permission before starting.
+    // On web, the browser shows its own permission dialog inside getUserMedia.
+    if (!kIsWeb) {
+      final status = await Permission.microphone.request();
+      if (!mounted) return;
+      if (status != PermissionStatus.granted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(status == PermissionStatus.permanentlyDenied
+              ? 'Microphone access is blocked. Enable it in device Settings.'
+              : 'Microphone permission denied.'),
+          action: status == PermissionStatus.permanentlyDenied
+              ? SnackBarAction(label: 'Settings', onPressed: openAppSettings)
+              : null,
+        ));
+        return;
+      }
+    }
+    try {
+      await _recorder.start();
+      setState(() { _isRecording = true; _recordSeconds = 0; });
+      _recordTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+        setState(() => _recordSeconds++);
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not start recording: $e')),
+      );
+    }
+  }
+
+  // Step 1: stop the mic (but don't send yet).
+  Future<void> _stopRecording() async {
+    _recordTimer?.cancel();
+    final duration = _recordSeconds;
+    setState(() { _isRecording = false; _recordDuration = duration; _recordSeconds = 0; _uploading = true; });
+    try {
+      final bytes = await _recorder.stop();
+      if (bytes == null || bytes.isEmpty) {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Recording was empty — nothing to send.')),
+        );
+        setState(() { _recordDuration = 0; });
+        return;
+      }
+      setState(() => _pendingVoiceBytes = bytes);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to stop recording: $e')),
+      );
+      setState(() { _recordDuration = 0; });
+    } finally {
+      if (mounted) setState(() => _uploading = false);
+    }
+  }
+
+  // Step 2: upload and send the stopped recording.
+  Future<void> _sendPendingVoiceNote() async {
+    final bytes = _pendingVoiceBytes;
+    if (bytes == null || bytes.isEmpty) return;
+    setState(() { _pendingVoiceBytes = null; _recordDuration = 0; _uploading = true; });
+    try {
+      final res = await ApiClient.uploadMediaBytes(
+          bytes, _recorder.fileName, _recorder.mimeType);
+      final mediaId = res.data['media_id'];
+      SocketService.emit('send_message', {
+        'conversation_id': _convId,
+        'type': 'audio',
+        'media_id': mediaId,
+        'reply_to_id': _replyTarget?['id'],
+      });
+      setState(() => _replyTarget = null);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to send voice note: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _uploading = false);
+    }
+  }
+
+  void _cancelVoiceRecording() async {
+    _recordTimer?.cancel();
+    if (_isRecording) await _recorder.cancel();
+    setState(() {
+      _isRecording = false;
+      _recordSeconds = 0;
+      _recordDuration = 0;
+      _pendingVoiceBytes = null;
+    });
+  }
+
+  String _formatRecordDuration(int seconds) {
+    final m = (seconds ~/ 60).toString().padLeft(2, '0');
+    final s = (seconds % 60).toString().padLeft(2, '0');
+    return '$m:$s';
+  }
+
+  // ── Scheduled / disappearing ─────────────────────────────────
 
   Future<void> _loadScheduled() async {
     final res = await ApiClient.getScheduledMessages(_convId);
@@ -185,6 +307,8 @@ class _ChatScreenState extends State<ChatScreen> {
     _textCtrl.clear();
   }
 
+  // ── Messages ─────────────────────────────────────────────────
+
   Future<void> _loadMessages({String? before}) async {
     final res = await ApiClient.getMessages(_convId, before: before);
     final data = res.data as Map<String, dynamic>;
@@ -265,9 +389,16 @@ class _ChatScreenState extends State<ChatScreen> {
     if (text.isEmpty) return;
 
     if (_editingMessage != null) {
-      SocketService.emit('edit_message', {'message_id': _editingMessage!['id'], 'content': text});
+      final msgId = _editingMessage!['id'];
       setState(() => _editingMessage = null);
       _textCtrl.clear();
+      SocketService.emit('edit_message', {'message_id': msgId, 'content': text}, (ack) {
+        if (ack is Map && ack['error'] != null && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Could not edit message: ${ack['error']}')),
+          );
+        }
+      });
       return;
     }
 
@@ -301,55 +432,90 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Future<void> _attachFile() async {
     final messenger = ScaffoldMessenger.of(context);
-    final uploadFailedText = AppLocalizations.of(context)!.chatUploadFailed;
-    final result = await FilePicker.platform.pickFiles(withData: false, withReadStream: false);
+    // withData: true loads bytes into memory — this avoids content:// URI issues
+    // on Android where MultipartFile.fromFile cannot read scoped-storage paths.
+    final result = await FilePicker.platform.pickFiles(
+      withData: true,
+      allowMultiple: false,
+      type: FileType.any,
+    );
     if (result == null || result.files.isEmpty) return;
-    final file = result.files.first;
-    if (file.path == null) return;
+    final file  = result.files.first;
+    final bytes = file.bytes;
+    if (bytes == null) {
+      messenger.showSnackBar(const SnackBar(content: Text('Could not read file')));
+      return;
+    }
 
     setState(() => _uploading = true);
     try {
-      final mime = file.extension != null ? _mimeFromExt(file.extension!) : 'application/octet-stream';
-      final res  = await ApiClient.uploadMedia(file.path!, mime);
+      final mime    = _mimeFromExt(file.extension ?? '');
+      final res     = await ApiClient.uploadMediaBytes(bytes, file.name, mime);
       final mediaId = res.data['media_id'];
-      final type = mime.startsWith('image/') ? 'image'
-                 : mime.startsWith('audio/') ? 'audio'
-                 : mime.startsWith('video/') ? 'video' : 'document';
+      final msgType = _msgTypeFromMime(mime);
       SocketService.emit('send_message', {
         'conversation_id': _convId,
-        'type': type,
+        'type': msgType,
         'media_id': mediaId,
         'reply_to_id': _replyTarget?['id'],
       });
       setState(() => _replyTarget = null);
-    } catch (_) {
-      messenger.showSnackBar(SnackBar(content: Text(uploadFailedText)));
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text('Upload failed: $e')));
     } finally {
       setState(() => _uploading = false);
     }
   }
 
+  String _mimeFromExt(String ext) {
+    const map = {
+      // Images
+      'jpg': 'image/jpeg', 'jpeg': 'image/jpeg', 'png': 'image/png',
+      'gif': 'image/gif',  'webp': 'image/webp', 'bmp': 'image/bmp',
+      'svg': 'image/svg+xml', 'heic': 'image/heic', 'heif': 'image/heif',
+      // Audio
+      'mp3': 'audio/mpeg', 'ogg': 'audio/ogg', 'wav': 'audio/wav',
+      'm4a': 'audio/mp4',  'aac': 'audio/aac', 'flac': 'audio/flac',
+      // Video
+      'mp4': 'video/mp4',  'webm': 'video/webm', 'mov': 'video/quicktime',
+      'avi': 'video/x-msvideo', 'mkv': 'video/x-matroska',
+      // Documents
+      'pdf': 'application/pdf',
+      'doc': 'application/msword',
+      'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'xls': 'application/vnd.ms-excel',
+      'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'ppt': 'application/vnd.ms-powerpoint',
+      'pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      'txt': 'text/plain', 'csv': 'text/csv', 'json': 'application/json',
+      'xml': 'application/xml', 'html': 'text/html', 'md': 'text/markdown',
+      // Archives
+      'zip': 'application/zip', 'rar': 'application/vnd.rar',
+      '7z': 'application/x-7z-compressed', 'tar': 'application/x-tar',
+      'gz': 'application/gzip',
+      // APK
+      'apk': 'application/vnd.android.package-archive',
+    };
+    return map[ext.toLowerCase()] ?? 'application/octet-stream';
+  }
+
+  String _msgTypeFromMime(String mime) {
+    if (mime.startsWith('image/')) return 'image';
+    if (mime.startsWith('audio/')) return 'audio';
+    if (mime.startsWith('video/')) return 'video';
+    return 'document';
+  }
+
   void _startReply(Map<String, dynamic> message) {
-    setState(() {
-      _editingMessage = null;
-      _replyTarget = message;
-    });
+    setState(() { _editingMessage = null; _replyTarget = message; });
   }
 
   void _startEdit(Map<String, dynamic> message) {
-    setState(() {
-      _replyTarget = null;
-      _editingMessage = message;
-      _textCtrl.text = message['content'] ?? '';
-    });
+    setState(() { _replyTarget = null; _editingMessage = message; _textCtrl.text = message['content'] ?? ''; });
   }
 
   void _cancelComposerExtra() {
-    setState(() {
-      _replyTarget = null;
-      _editingMessage = null;
-      _textCtrl.clear();
-    });
+    setState(() { _replyTarget = null; _editingMessage = null; _textCtrl.clear(); });
   }
 
   void _reactToMessage(Map<String, dynamic> message, String emoji) {
@@ -376,7 +542,13 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
     );
     if (confirmed == true) {
-      SocketService.emit('delete_message', {'message_id': message['id']});
+      SocketService.emit('delete_message', {'message_id': message['id']}, (ack) {
+        if (ack is Map && ack['error'] != null && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Could not delete message: ${ack['error']}')),
+          );
+        }
+      });
     }
   }
 
@@ -409,18 +581,6 @@ class _ChatScreenState extends State<ChatScreen> {
       onForward: () => _openForwardScreen(message),
       onDelete: isMine ? () => _confirmDeleteMessage(message) : null,
     );
-  }
-
-  String _mimeFromExt(String ext) {
-    const map = {
-      'jpg': 'image/jpeg', 'jpeg': 'image/jpeg', 'png': 'image/png',
-      'gif': 'image/gif',  'webp': 'image/webp',
-      'mp3': 'audio/mpeg', 'ogg': 'audio/ogg', 'wav': 'audio/wav',
-      'mp4': 'video/mp4',  'webm': 'video/webm',
-      'pdf': 'application/pdf', 'doc': 'application/msword',
-      'txt': 'text/plain',
-    };
-    return map[ext.toLowerCase()] ?? 'application/octet-stream';
   }
 
   String _displayName() {
@@ -468,7 +628,7 @@ class _ChatScreenState extends State<ChatScreen> {
         // Messages
         Expanded(
           child: _loading
-              ? const Center(child: CircularProgressIndicator())
+              ? const Center(child: CircularProgressIndicator(color: AppTheme.primary))
               : ListView.builder(
                   controller: _scrollCtrl,
                   padding: const EdgeInsets.all(12),
@@ -507,9 +667,10 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
 
         if (_uploading)
-          const LinearProgressIndicator(backgroundColor: AppTheme.border, color: AppTheme.cta),
+          const LinearProgressIndicator(backgroundColor: AppTheme.border, color: AppTheme.primary),
 
-        if (_replyTarget != null || _editingMessage != null)
+        // Reply / edit preview
+        if (!_isRecording && _pendingVoiceBytes == null && (_replyTarget != null || _editingMessage != null))
           Container(
             color: AppTheme.surface,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -526,8 +687,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
                     Text(
                       (_editingMessage ?? _replyTarget)?['content'] ?? l10n.commonMedia,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1, overflow: TextOverflow.ellipsis,
                       style: const TextStyle(color: AppTheme.textSub, fontSize: 12),
                     ),
                   ],
@@ -540,7 +700,8 @@ class _ChatScreenState extends State<ChatScreen> {
             ]),
           ),
 
-        if (_mentionCandidates.isNotEmpty)
+        // Mention autocomplete
+        if (!_isRecording && _pendingVoiceBytes == null && _mentionCandidates.isNotEmpty)
           Container(
             color: AppTheme.surface,
             constraints: const BoxConstraints(maxHeight: 160),
@@ -557,7 +718,8 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           ),
 
-        if (_scheduledMessages.isNotEmpty)
+        // Scheduled messages
+        if (!_isRecording && _pendingVoiceBytes == null && _scheduledMessages.isNotEmpty)
           Container(
             color: AppTheme.surface,
             child: Column(children: [
@@ -580,56 +742,154 @@ class _ChatScreenState extends State<ChatScreen> {
                           style: const TextStyle(color: AppTheme.textSub, fontSize: 11)),
                       trailing: TextButton(
                         onPressed: () => _cancelScheduled(sm['id']),
-                        child: Text(l10n.commonCancel, style: const TextStyle(color: Colors.redAccent, fontSize: 12)),
+                        child: Text(l10n.commonCancel,
+                            style: const TextStyle(color: Colors.redAccent, fontSize: 12)),
                       ),
                     )),
             ]),
           ),
 
-        // Input bar
-        Container(
-          color: AppTheme.surface,
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-          child: SafeArea(
-            top: false,
-            child: Row(children: [
-              IconButton(
-                icon: const Icon(Icons.attach_file_rounded, color: AppTheme.textSub),
-                onPressed: _uploading ? null : _attachFile,
-              ),
-              IconButton(
-                icon: const Icon(Icons.schedule_rounded, color: AppTheme.textSub),
-                tooltip: l10n.chatScheduleMessage,
-                onPressed: _scheduleMessage,
-              ),
-              Expanded(
-                child: TextField(
-                  controller: _textCtrl,
-                  onChanged: _onTextChanged,
-                  style: const TextStyle(color: AppTheme.textMain),
-                  decoration: InputDecoration(
-                    hintText: l10n.chatTypeMessage,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide.none),
-                    filled: true, fillColor: AppTheme.bg,
-                  ),
-                  maxLines: null,
-                  textInputAction: TextInputAction.newline,
-                ),
-              ),
-              const SizedBox(width: 8),
-              IconButton(
-                icon: const Icon(Icons.send_rounded, color: Colors.black87),
-                style: IconButton.styleFrom(backgroundColor: AppTheme.cta, shape: const CircleBorder()),
-                onPressed: _sendText,
-              ),
-            ]),
-          ),
-        ),
+        // ── Input bar ────────────────────────────────────────────
+        (_isRecording || _pendingVoiceBytes != null) ? _buildRecordingBar() : _buildInputBar(l10n),
       ]),
     );
   }
+
+  Widget _buildRecordingBar() {
+    return Container(
+      color: AppTheme.surface,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: SafeArea(
+        top: false,
+        child: Row(children: [
+          // Discard / cancel
+          GestureDetector(
+            onTap: _cancelVoiceRecording,
+            child: const Icon(Icons.delete_rounded, color: AppTheme.danger, size: 28),
+          ),
+          const SizedBox(width: 12),
+
+          if (_isRecording) ...[
+            // Live: pulsing red dot + elapsed timer
+            Expanded(
+              child: Row(children: [
+                Container(
+                  width: 10, height: 10,
+                  decoration: const BoxDecoration(color: AppTheme.danger, shape: BoxShape.circle),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  _formatRecordDuration(_recordSeconds),
+                  style: const TextStyle(color: AppTheme.textMain, fontSize: 16, fontWeight: FontWeight.w500),
+                ),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text('Recording…', style: TextStyle(color: AppTheme.textSub, fontSize: 13)),
+                ),
+              ]),
+            ),
+            // Stop button — stops mic, enters preview state
+            GestureDetector(
+              onTap: _stopRecording,
+              child: Container(
+                width: 44, height: 44,
+                decoration: const BoxDecoration(color: AppTheme.danger, shape: BoxShape.circle),
+                child: const Icon(Icons.stop_rounded, color: Colors.white, size: 24),
+              ),
+            ),
+          ] else ...[
+            // Preview: mic icon + total duration
+            Expanded(
+              child: Row(children: [
+                const Icon(Icons.mic_rounded, color: AppTheme.primary, size: 20),
+                const SizedBox(width: 8),
+                Text(
+                  _formatRecordDuration(_recordDuration),
+                  style: const TextStyle(color: AppTheme.textMain, fontSize: 16, fontWeight: FontWeight.w500),
+                ),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text('Ready to send', style: TextStyle(color: AppTheme.textSub, fontSize: 13)),
+                ),
+              ]),
+            ),
+            // Send button
+            GestureDetector(
+              onTap: _sendPendingVoiceNote,
+              child: Container(
+                width: 44, height: 44,
+                decoration: const BoxDecoration(color: AppTheme.primary, shape: BoxShape.circle),
+                child: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+              ),
+            ),
+          ],
+        ]),
+      ),
+    );
+  }
+
+  Widget _buildInputBar(AppLocalizations l10n) {
+    return Container(
+      color: AppTheme.surface,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      child: SafeArea(
+        top: false,
+        child: Row(children: [
+          // Attach file
+          IconButton(
+            icon: const Icon(Icons.attach_file_rounded, color: AppTheme.textSub),
+            onPressed: _uploading ? null : _attachFile,
+          ),
+          // Schedule
+          IconButton(
+            icon: const Icon(Icons.schedule_rounded, color: AppTheme.textSub),
+            tooltip: l10n.chatScheduleMessage,
+            onPressed: _scheduleMessage,
+          ),
+          // Text field
+          Expanded(
+            child: TextField(
+              controller: _textCtrl,
+              onChanged: _onTextChanged,
+              style: const TextStyle(color: AppTheme.textMain),
+              decoration: InputDecoration(
+                hintText: l10n.chatTypeMessage,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide.none),
+                filled: true, fillColor: AppTheme.bg,
+              ),
+              maxLines: null,
+              textInputAction: TextInputAction.newline,
+            ),
+          ),
+          const SizedBox(width: 8),
+
+          // Mic (when empty) OR Send (when has text)
+          ValueListenableBuilder<TextEditingValue>(
+            valueListenable: _textCtrl,
+            builder: (_, value, __) {
+              final hasText = value.text.trim().isNotEmpty;
+              return GestureDetector(
+                onTap: hasText ? _sendText : _startVoiceRecording,
+                child: Container(
+                  width: 44, height: 44,
+                  decoration: const BoxDecoration(color: AppTheme.primary, shape: BoxShape.circle),
+                  child: Icon(
+                    hasText ? Icons.send_rounded : Icons.mic_rounded,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ),
+              );
+            },
+          ),
+        ]),
+      ),
+    );
+  }
 }
+
+// ── Reply preview inside bubble ───────────────────────────────
 
 class _ReplyPreview extends StatelessWidget {
   final Map<String, dynamic> replyTo;
@@ -663,6 +923,8 @@ class _ReplyPreview extends StatelessWidget {
   }
 }
 
+// ── Forwarded label ───────────────────────────────────────────
+
 class _ForwardedLabel extends StatelessWidget {
   final Map<String, dynamic> forwardedFrom;
   const _ForwardedLabel({required this.forwardedFrom});
@@ -680,6 +942,8 @@ class _ForwardedLabel extends StatelessWidget {
   }
 }
 
+// ── Reaction bar ──────────────────────────────────────────────
+
 class _ReactionBar extends StatelessWidget {
   final List<dynamic> reactions;
   final String myId;
@@ -689,12 +953,10 @@ class _ReactionBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (reactions.isEmpty) return const SizedBox.shrink();
-
     final grouped = <String, List<String>>{};
     for (final r in reactions) {
       grouped.putIfAbsent(r['emoji'], () => []).add(r['user_id']);
     }
-
     return Padding(
       padding: const EdgeInsets.only(top: 4),
       child: Wrap(
@@ -720,6 +982,8 @@ class _ReactionBar extends StatelessWidget {
   }
 }
 
+// ── Message bubble ────────────────────────────────────────────
+
 class _MessageBubble extends StatelessWidget {
   final Map<String, dynamic> message;
   final bool isMine;
@@ -740,13 +1004,15 @@ class _MessageBubble extends StatelessWidget {
     return delivered ? '✓✓' : '✓';
   }
 
+  bool _isRead(dynamic messageStatus) {
+    final statuses = List<Map<String, dynamic>>.from(messageStatus ?? []);
+    return statuses.any((s) => s['read_at'] != null);
+  }
+
   List<TextSpan> _contentSpans(String content, Color baseColor) {
-    // On "mine" bubbles the background is AppTheme.primary itself, so that
-    // color would be invisible there — use underline+bold on white instead.
     final mentionStyle = isMine
         ? const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, decoration: TextDecoration.underline)
         : const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w700);
-
     final parts = content.split(RegExp(r'(@\w+)'));
     return parts.map((part) {
       if (part.startsWith('@')) {
@@ -776,8 +1042,8 @@ class _MessageBubble extends StatelessWidget {
     final time = message['created_at'] != null
         ? TimeOfDay.fromDateTime(DateTime.parse(message['created_at']).toLocal()).format(context)
         : '';
-
     final reactions = List<Map<String, dynamic>>.from(message['message_reactions'] ?? []);
+    final hasMedia = message['type'] != 'text' && message['media_id'] != null;
 
     return Align(
       alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
@@ -786,10 +1052,13 @@ class _MessageBubble extends StatelessWidget {
         children: [
           Container(
             margin: const EdgeInsets.symmetric(vertical: 3, horizontal: 4),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            padding: EdgeInsets.symmetric(
+              horizontal: hasMedia && message['type'] == 'audio' ? 8 : 14,
+              vertical: 10,
+            ),
             constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.72),
             decoration: BoxDecoration(
-              color: isMine ? AppTheme.primary : AppTheme.surface,
+              color: isMine ? AppTheme.sentBubble : AppTheme.receivedBubble,
               borderRadius: BorderRadius.only(
                 topLeft:     const Radius.circular(18),
                 topRight:    const Radius.circular(18),
@@ -800,10 +1069,12 @@ class _MessageBubble extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (message['forwarded_from'] != null) _ForwardedLabel(forwardedFrom: message['forwarded_from']),
-                if (message['reply_to'] != null) _ReplyPreview(replyTo: message['reply_to']),
-                if (message['type'] != 'text' && message['media_id'] != null)
-                  _MediaPreview(mediaId: message['media_id'], type: message['type']),
+                if (message['forwarded_from'] != null)
+                  _ForwardedLabel(forwardedFrom: message['forwarded_from']),
+                if (message['reply_to'] != null)
+                  _ReplyPreview(replyTo: message['reply_to']),
+                if (hasMedia)
+                  _MediaRouter(mediaId: message['media_id'], type: message['type'], isMine: isMine),
                 if (message['content'] != null)
                   RichText(text: TextSpan(
                     children: _contentSpans(message['content'], isMine ? Colors.white : AppTheme.textMain),
@@ -820,8 +1091,15 @@ class _MessageBubble extends StatelessWidget {
                       color: isMine ? Colors.white60 : AppTheme.textSub)),
                   if (isMine) ...[
                     const SizedBox(width: 3),
-                    Text(_receiptTick(message['message_status']),
-                        style: const TextStyle(fontSize: 10, color: Colors.white60)),
+                    Text(
+                      _receiptTick(message['message_status']),
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: _isRead(message['message_status'])
+                            ? AppTheme.readTick
+                            : Colors.white60,
+                      ),
+                    ),
                   ],
                 ]),
               ],
@@ -837,55 +1115,464 @@ class _MessageBubble extends StatelessWidget {
   }
 }
 
-class _MediaPreview extends StatefulWidget {
+// ── Media router — picks the right widget per type ────────────
+
+class _MediaRouter extends StatelessWidget {
   final String mediaId;
   final String type;
-  const _MediaPreview({required this.mediaId, required this.type});
-  @override State<_MediaPreview> createState() => _MediaPreviewState();
+  final bool isMine;
+  const _MediaRouter({required this.mediaId, required this.type, required this.isMine});
+
+  @override
+  Widget build(BuildContext context) {
+    switch (type) {
+      case 'image':    return _ImageMessage(mediaId: mediaId);
+      case 'audio':    return _AudioMessage(mediaId: mediaId, isMine: isMine);
+      case 'video':    return _VideoMessage(mediaId: mediaId);
+      case 'document': return _DocumentMessage(mediaId: mediaId, isMine: isMine);
+      default:         return _DocumentMessage(mediaId: mediaId, isMine: isMine);
+    }
+  }
 }
 
-class _MediaPreviewState extends State<_MediaPreview> {
-  String? _url;
+// ── Image message ─────────────────────────────────────────────
 
+class _ImageMessage extends StatefulWidget {
+  final String mediaId;
+  const _ImageMessage({required this.mediaId});
+  @override State<_ImageMessage> createState() => _ImageMessageState();
+}
+class _ImageMessageState extends State<_ImageMessage> {
+  String? _url;
   Future<void> _load() async {
     final res = await ApiClient.getMediaUrl(widget.mediaId);
     setState(() => _url = res.data['url']);
   }
-
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    if (widget.type == 'image') {
+    if (_url != null) {
       return GestureDetector(
-        onTap: _url == null ? _load : null,
-        child: _url != null
-            ? ClipRRect(borderRadius: BorderRadius.circular(8),
-                child: Image.network(_url!, width: 200, height: 150, fit: BoxFit.cover))
-            : Container(width: 160, height: 100, color: Colors.black26,
-                child: Center(child: Text(l10n.chatTapToLoad, style: const TextStyle(color: Colors.white54, fontSize: 12)))),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.network(_url!, width: 200, height: 150, fit: BoxFit.cover),
+        ),
       );
     }
     return GestureDetector(
       onTap: _load,
+      child: Container(
+        width: 160, height: 100, color: Colors.black26,
+        child: const Center(child: Text('Tap to load', style: TextStyle(color: Colors.white54, fontSize: 12))),
+      ),
+    );
+  }
+}
+
+// ── Audio / voice note message ────────────────────────────────
+
+class _AudioMessage extends StatefulWidget {
+  final String mediaId;
+  final bool isMine;
+  const _AudioMessage({required this.mediaId, required this.isMine});
+  @override State<_AudioMessage> createState() => _AudioMessageState();
+}
+
+class _AudioMessageState extends State<_AudioMessage> {
+  final _player = AudioPlayer();
+  String? _url;
+  bool _fetchingUrl = false;
+  bool _playing = false;
+  Duration _position = Duration.zero;
+  Duration _duration = Duration.zero;
+  final _subs = <StreamSubscription>[];
+
+  @override
+  void initState() {
+    super.initState();
+    _subs.add(_player.onPlayerStateChanged.listen((s) {
+      if (mounted) setState(() => _playing = s == PlayerState.playing);
+    }));
+    _subs.add(_player.onPositionChanged.listen((p) {
+      if (mounted) setState(() => _position = p);
+    }));
+    // Duration becomes available as soon as the stream header is read —
+    // no need to download the full file first.
+    _subs.add(_player.onDurationChanged.listen((d) {
+      if (mounted) setState(() => _duration = d);
+    }));
+    _subs.add(_player.onPlayerComplete.listen((_) {
+      if (mounted) setState(() { _playing = false; _position = Duration.zero; });
+    }));
+  }
+
+  @override
+  void dispose() {
+    for (final s in _subs) s.cancel();
+    _player.dispose();
+    super.dispose();
+  }
+
+  Future<void> _togglePlayPause() async {
+    // Pause immediately — no network call needed.
+    if (_playing) {
+      await _player.pause();
+      return;
+    }
+
+    // Fetch the signed URL once and cache it.
+    if (_url == null) {
+      setState(() => _fetchingUrl = true);
+      try {
+        final res = await ApiClient.getMediaUrl(widget.mediaId);
+        _url = res.data['url'];
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Could not load audio: $e')),
+          );
+        }
+        return;
+      } finally {
+        if (mounted) setState(() => _fetchingUrl = false);
+      }
+    }
+
+    // UrlSource streams from the remote URL — playback starts as soon as
+    // a few seconds of audio have buffered, not after the full download.
+    if (mounted) await _player.play(UrlSource(_url!));
+  }
+
+  Future<void> _seek(double milliseconds) async {
+    await _player.seek(Duration(milliseconds: milliseconds.toInt()));
+    // If paused, resume so the seek position is audible immediately.
+    if (!_playing && _url != null) await _player.resume();
+  }
+
+  String _fmt(Duration d) {
+    final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '$m:$s';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final subColor  = widget.isMine ? Colors.white60 : AppTheme.textSub;
+    final iconColor = widget.isMine ? Colors.white   : AppTheme.primary;
+    final trackColor = widget.isMine ? Colors.white  : AppTheme.primary;
+    final hasDuration = _duration > Duration.zero;
+    final max = _duration.inMilliseconds.toDouble().clamp(1.0, double.infinity);
+    final val = _position.inMilliseconds.toDouble().clamp(0.0, max);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
       child: Row(children: [
-        Icon(_iconFor(widget.type), color: Colors.white70, size: 20),
+        // Play / pause / loading button
+        GestureDetector(
+          onTap: _fetchingUrl ? null : _togglePlayPause,
+          child: Container(
+            width: 36, height: 36,
+            decoration: BoxDecoration(
+              color: widget.isMine
+                  ? Colors.white24
+                  : AppTheme.primary.withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: _fetchingUrl
+                ? Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: CircularProgressIndicator(strokeWidth: 2, color: iconColor),
+                  )
+                : Icon(
+                    _playing ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                    color: iconColor,
+                    size: 22,
+                  ),
+          ),
+        ),
         const SizedBox(width: 8),
-        Text(_labelFor(widget.type, l10n), style: const TextStyle(color: Colors.white70, fontSize: 13)),
+
+        // Progress track + timestamps
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SliderTheme(
+                data: SliderThemeData(
+                  trackHeight: 2,
+                  thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+                  activeTrackColor: trackColor,
+                  inactiveTrackColor: subColor,
+                  thumbColor: trackColor,
+                  overlayShape: SliderComponentShape.noOverlay,
+                ),
+                child: Slider(
+                  value: val,
+                  min: 0,
+                  max: max,
+                  // Disable scrubbing until the stream header has been read
+                  // and we know the actual duration.
+                  onChanged: hasDuration ? _seek : null,
+                ),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Elapsed time — ticks forward while playing
+                  Text(_fmt(_position), style: TextStyle(fontSize: 10, color: subColor)),
+                  // Total duration — available as soon as stream header is read
+                  if (hasDuration)
+                    Text(_fmt(_duration), style: TextStyle(fontSize: 10, color: subColor)),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 4),
+        const Icon(Icons.mic_rounded, size: 14, color: AppTheme.textSub),
       ]),
     );
   }
+}
 
-  IconData _iconFor(String t) => switch (t) {
-    'audio'    => Icons.audiotrack_rounded,
-    'video'    => Icons.play_circle_rounded,
-    'document' => Icons.insert_drive_file_rounded,
-    _          => Icons.attach_file_rounded,
-  };
+// ── Video message ─────────────────────────────────────────────
 
-  String _labelFor(String t, AppLocalizations l10n) => switch (t) {
-    'audio'    => l10n.chatAudioMessage,
-    'video'    => l10n.chatVideoType,
-    'document' => l10n.chatDocumentType,
-    _          => l10n.chatFileType,
-  };
+class _VideoMessage extends StatefulWidget {
+  final String mediaId;
+  const _VideoMessage({required this.mediaId});
+  @override State<_VideoMessage> createState() => _VideoMessageState();
+}
+class _VideoMessageState extends State<_VideoMessage> {
+  String? _url;
+  Future<void> _load() async {
+    final res = await ApiClient.getMediaUrl(widget.mediaId);
+    setState(() => _url = res.data['url']);
+  }
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: _url == null ? _load : () async {
+        if (_url != null) await OpenFilex.open(_url!);
+      },
+      child: Container(
+        width: 160, height: 90, color: Colors.black45,
+        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+          Icon(Icons.play_circle_rounded, color: Colors.white.withValues(alpha: 0.85), size: 40),
+          const SizedBox(height: 4),
+          Text(_url == null ? 'Tap to load video' : 'Tap to open',
+              style: const TextStyle(color: Colors.white70, fontSize: 11)),
+        ]),
+      ),
+    );
+  }
+}
+
+// ── Document / file message ───────────────────────────────────
+
+class _DocumentMessage extends StatefulWidget {
+  final String mediaId;
+  final bool isMine;
+  const _DocumentMessage({required this.mediaId, required this.isMine});
+  @override State<_DocumentMessage> createState() => _DocumentMessageState();
+}
+
+class _DocumentMessageState extends State<_DocumentMessage> {
+  String? _url;
+  String  _fileName = 'File';
+  String  _mimeType = '';
+  bool    _loadingMeta    = false;
+  bool    _downloading    = false;
+  double? _downloadProgress;
+  String? _localPath;
+
+  Future<void> _loadMeta() async {
+    if (_url != null || _loadingMeta) return;
+    setState(() => _loadingMeta = true);
+    try {
+      final res = await ApiClient.getMediaUrl(widget.mediaId);
+      setState(() {
+        _url      = res.data['url'];
+        _fileName = res.data['file_name'] ?? 'File';
+        _mimeType = res.data['mime_type'] ?? '';
+      });
+    } finally {
+      if (mounted) setState(() => _loadingMeta = false);
+    }
+  }
+
+  Future<void> _download() async {
+    if (_url == null) {
+      await _loadMeta();
+      if (_url == null) return;
+    }
+    if (_localPath != null) {
+      await OpenFilex.open(_localPath!);
+      return;
+    }
+    setState(() { _downloading = true; _downloadProgress = 0; });
+    try {
+      final dir  = await getApplicationDocumentsDirectory();
+      final path = '${dir.path}/$_fileName';
+      await dio_pkg.Dio().download(
+        _url!,
+        path,
+        onReceiveProgress: (received, total) {
+          if (total > 0 && mounted) {
+            setState(() => _downloadProgress = received / total);
+          }
+        },
+      );
+      setState(() { _localPath = path; _downloading = false; _downloadProgress = null; });
+      await OpenFilex.open(path);
+    } catch (_) {
+      if (mounted) {
+        setState(() { _downloading = false; _downloadProgress = null; });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Download failed')),
+        );
+      }
+    }
+  }
+
+  IconData _iconFor(String mime) {
+    if (mime.contains('pdf'))        return Icons.picture_as_pdf_rounded;
+    if (mime.contains('word') || mime.contains('document')) return Icons.description_rounded;
+    if (mime.contains('excel') || mime.contains('spreadsheet') || mime.contains('csv'))
+                                     return Icons.table_chart_rounded;
+    if (mime.contains('powerpoint') || mime.contains('presentation'))
+                                     return Icons.slideshow_rounded;
+    if (mime.contains('image'))      return Icons.image_rounded;
+    if (mime.contains('audio'))      return Icons.audiotrack_rounded;
+    if (mime.contains('video'))      return Icons.videocam_rounded;
+    if (mime.contains('zip') || mime.contains('rar') || mime.contains('7z') || mime.contains('tar'))
+                                     return Icons.folder_zip_rounded;
+    if (mime.contains('apk'))        return Icons.android_rounded;
+    return Icons.insert_drive_file_rounded;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMeta();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final textColor = widget.isMine ? Colors.white : AppTheme.textMain;
+    final subColor  = widget.isMine ? Colors.white60 : AppTheme.textSub;
+    final iconBg    = widget.isMine
+        ? Colors.white.withValues(alpha: 0.15)
+        : AppTheme.primary.withValues(alpha: 0.12);
+    final iconColor = widget.isMine ? Colors.white : AppTheme.primary;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            Container(
+              width: 40, height: 40,
+              decoration: BoxDecoration(color: iconBg, borderRadius: BorderRadius.circular(8)),
+              child: _loadingMeta
+                  ? Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: CircularProgressIndicator(strokeWidth: 2, color: iconColor),
+                    )
+                  : Icon(_iconFor(_mimeType), color: iconColor, size: 22),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _fileName,
+                    style: TextStyle(color: textColor, fontSize: 13, fontWeight: FontWeight.w500),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (_mimeType.isNotEmpty)
+                    Text(_mimeType.split('/').last.toUpperCase(),
+                        style: TextStyle(color: subColor, fontSize: 10)),
+                ],
+              ),
+            ),
+          ]),
+
+          // Download progress
+          if (_downloading && _downloadProgress != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: _downloadProgress,
+                  backgroundColor: subColor.withValues(alpha: 0.3),
+                  color: widget.isMine ? Colors.white : AppTheme.primary,
+                  minHeight: 3,
+                ),
+              ),
+            ),
+
+          // Action buttons
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Row(children: [
+              // Download / Open button
+              GestureDetector(
+                onTap: _downloading ? null : _download,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: widget.isMine
+                        ? Colors.white.withValues(alpha: 0.2)
+                        : AppTheme.primary.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: widget.isMine ? Colors.white38 : AppTheme.primary.withValues(alpha: 0.4),
+                    ),
+                  ),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Icon(
+                      _localPath != null ? Icons.open_in_new_rounded : Icons.download_rounded,
+                      size: 14,
+                      color: iconColor,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      _localPath != null ? 'Open' : (_downloading ? 'Downloading...' : 'Download'),
+                      style: TextStyle(color: iconColor, fontSize: 12, fontWeight: FontWeight.w500),
+                    ),
+                  ]),
+                ),
+              ),
+
+              // Open in browser (always available once URL is loaded)
+              if (_url != null && _localPath == null) ...[
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: () async {
+                    if (_url != null) await OpenFilex.open(_url!);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: Colors.transparent,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: subColor.withValues(alpha: 0.4)),
+                    ),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      Icon(Icons.visibility_rounded, size: 14, color: subColor),
+                      const SizedBox(width: 4),
+                      Text('Preview', style: TextStyle(color: subColor, fontSize: 12)),
+                    ]),
+                  ),
+                ),
+              ],
+            ]),
+          ),
+        ],
+      ),
+    );
+  }
 }
