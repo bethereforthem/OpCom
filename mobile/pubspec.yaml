@@ -46,6 +46,15 @@ dependencies:
   # Emoji picker for custom message reactions
   emoji_picker_flutter: ^4.3.0
 
+  # Audio playback for voice notes and audio messages
+  audioplayers: ^6.4.0
+
+  # Local file paths (temp dir for recordings, downloads dir)
+  path_provider: ^2.1.4
+
+  # Open downloaded files with the device's native app
+  open_filex: ^4.4.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
