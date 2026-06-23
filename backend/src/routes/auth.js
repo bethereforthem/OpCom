@@ -67,7 +67,7 @@ router.post('/register', requireAuth, async (req, res) => {
 // app's existing approval-gated posture: device approval, RBAC, audit log).
 const OFFICER_ROLE_ID = '00000000-0000-0000-0000-000000000003'; // seeded in 001_seed_roles_permissions.sql
 router.post('/signup', async (req, res) => {
-    const { username, password, full_name, email, staff_id, locale } = req.body;
+    const { username, password, full_name, email, staff_id, phone_number, locale } = req.body;
 
     if (!username || !password || !full_name) {
         return res.status(400).json({ error: 'username, password, and full_name are required' });
@@ -84,6 +84,7 @@ router.post('/signup', async (req, res) => {
             username,
             email: email || null,
             staff_id: staff_id || null,
+            phone_number: phone_number || null,
             password_hash,
             full_name,
             role_id: OFFICER_ROLE_ID,
@@ -95,7 +96,7 @@ router.post('/signup', async (req, res) => {
 
     if (error) {
         if (error.code === '23505') {
-            return res.status(409).json({ error: 'Username, email, or staff_id already exists' });
+            return res.status(409).json({ error: 'Username, email, phone number, or staff_id already exists' });
         }
         return res.status(500).json({ error: 'Failed to create account' });
     }
