@@ -47,6 +47,10 @@
 			</array>
 		</dict>
 	</dict>
+	<!-- Microphone — voice note recording -->
+	<key>NSMicrophoneUsageDescription</key>
+	<string>OpCom needs microphone access to record and send voice notes.</string>
+
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
