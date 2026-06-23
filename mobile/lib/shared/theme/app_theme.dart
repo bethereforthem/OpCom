@@ -1,41 +1,42 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  // Surfaces
-  static const Color bg         = Color(0xFF0F0E17); // near-black, warm-violet tinted
-  static const Color surface    = Color(0xFF1E1B2E); // deep violet-charcoal: cards, app bar, inputs
-  static const Color surfaceAlt = Color(0xFF272340); // elevated: sheets, dialogs, selected rows
-  static const Color border     = Color(0xFF3D3856);
+  // WhatsApp dark mode palette
+  static const Color bg         = Color(0xFF0D1418); // deep dark background
+  static const Color surface    = Color(0xFF1F2C34); // panels, app bar, input bar
+  static const Color surfaceAlt = Color(0xFF2A3942); // elevated: sheets, dialogs, selected rows
+  static const Color border     = Color(0xFF2A3942);
 
-  // Brand — indigo. Used for brand chrome, links, selection/active-state
-  // indicators, and sent-message bubbles. NOT used for action buttons.
-  static const Color primary     = Color(0xFF4338CA);
-  static const Color primaryDark = Color(0xFF3730A3);
+  // Brand — WhatsApp teal-green
+  static const Color primary     = Color(0xFF00A884);
+  static const Color primaryDark = Color(0xFF008069);
 
-  // Call-to-action — amber. Reserved for "do this now": buttons, the FAB,
-  // the send button, in-progress indicators.
-  static const Color cta        = Color(0xFFF59E0B);
-  static const Color ctaPressed = Color(0xFFD97706);
+  // Message bubbles
+  static const Color sentBubble     = Color(0xFF005C4B); // sent messages (dark teal-green)
+  static const Color receivedBubble = Color(0xFF1F2C34); // received messages
+
+  // Read receipts — blue ticks when message is read
+  static const Color readTick = Color(0xFF53BDEB);
+
+  // Call-to-action — WhatsApp green (FAB, send button)
+  static const Color cta        = Color(0xFF00A884);
+  static const Color ctaPressed = Color(0xFF008069);
 
   // Semantic
-  static const Color success = Color(0xFF10B981);
+  static const Color success = Color(0xFF00A884);
   static const Color warning = Color(0xFFF97316);
   static const Color danger  = Color(0xFFDC2626);
 
   // Text
-  static const Color textMain = Color(0xFFF8F7FB);
-  static const Color textSub  = Color(0xFFA8A3BD);
+  static const Color textMain = Color(0xFFE9EDEF);
+  static const Color textSub  = Color(0xFF8696A0);
 
-  // Brand gradient for logo/icon containers and avatars — richer than a
-  // flat fill without introducing a third hue.
   static const LinearGradient brandGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [primary, primaryDark],
   );
 
-  // Soft amber glow used behind the "hero" icon on auth/incoming-call
-  // screens — the one shared decorative touch tying those moments together.
   static List<BoxShadow> get heroGlow => [
     BoxShadow(color: cta.withValues(alpha: 0.35), blurRadius: 40, spreadRadius: 4),
   ];
@@ -75,9 +76,9 @@ class AppTheme {
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         backgroundColor: cta,
-        foregroundColor: Colors.black87,
+        foregroundColor: Colors.white,
         disabledBackgroundColor: cta.withValues(alpha: 0.35),
-        disabledForegroundColor: Colors.black54,
+        disabledForegroundColor: Colors.white60,
         minimumSize: const Size(double.infinity, 48),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
@@ -95,7 +96,7 @@ class AppTheme {
     ),
     floatingActionButtonTheme: const FloatingActionButtonThemeData(
       backgroundColor: cta,
-      foregroundColor: Colors.black87,
+      foregroundColor: Colors.white,
     ),
     checkboxTheme: CheckboxThemeData(
       fillColor: WidgetStateProperty.resolveWith(
